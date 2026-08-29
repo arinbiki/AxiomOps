@@ -1,0 +1,353 @@
+{
+  "name": "TEST_race_condition",
+  "id": "1c85e706-25a9-43c5-ad49-06d85d499313",
+  "nodes": [
+    {
+      "id": "de437cf8-ee87-4363-9b78-c95f09e9c24a",
+      "name": "Start Race",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        400
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "0d78eb41-4d29-40e9-baea-35186a281832",
+      "name": "Race Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        450,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const payload = {\n  source: 'ComplianceGuardPro', runId: 'RUN-RACE-001', framework: 'SOC2',\n  timestamp: new Date().toISOString(),\n  evidence: [{ controlId: 'CC6.6', resourceId: 'arn:aws:s3:::race-bucket', resourceName: 'race-bucket',\n    service: 'aws', passed: false, severity: 'high', evidencePath: 'test/race.json', rawData: { test: true } }]\n};\n// Return 5 identical items to simulate parallel requests\nreturn Array(5).fill(0).map(() => ({ json: { ...payload } }));"
+      }
+    },
+    {
+      "id": "c65ebfd0-0cea-40f1-97eb-11a0408f5cfc",
+      "name": "Split Race",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        650,
+        400
+      ],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "b0508a27-c328-44d8-ac18-780b52224b98",
+      "name": "Send Race",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        850,
+        400
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/complianceops-finding-ingestion",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COMPLIANCEOPS-TOKEN",
+              "value": "change-me"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "74aa70d7-7209-4d76-a727-24023e1cd222",
+      "name": "Race Done",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        400
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "6604cb63-b468-416c-bee8-715cf7063f62",
+      "name": "Wait Race",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        400
+      ],
+      "parameters": {
+        "amount": 3,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "041497a6-75b5-4b24-b63d-ed63a5c32c8f",
+      "name": "Assert Race",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        1450,
+        400
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT occurrence_count FROM findings WHERE finding_key = 'CC6.6::arn:aws:s3:::race-bucket::SOC2';",
+        "options": {
+          "nodeVersion": "2.1"
+        }
+      }
+    },
+    {
+      "id": "42100439-a7ee-46f9-8d71-35dbffdeb179",
+      "name": "Race OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1650,
+        400
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "a78a5779-a0ba-4231-b3c3-e45c16e0ff0e",
+              "leftValue": "={{ parseInt($json.occurrence_count) }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "eq"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "15d90aec-bed0-4166-95b1-06031a85cd0a",
+      "name": "Race_PASS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1850,
+        300
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_race_condition",
+              "type": "string",
+              "value": "PASS"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "73981440-15d6-4e6f-8d60-5c12b716794b",
+      "name": "Race_FAIL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1850,
+        500
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_race_condition",
+              "type": "string",
+              "value": "FAIL"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "407d2276-3ff3-45bb-88ab-0715d4e8d8d8",
+      "name": "Race_Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2050,
+        400
+      ],
+      "parameters": {
+        "jsCode": "return [{ json: { test: 'race_condition', result: $input.first().json.test_race_condition, note: '5 parallel identical requests must result in occurrence_count=1 due to ON CONFLICT' } }];"
+      }
+    },
+    {
+      "id": "dabe16ea-f5f8-406b-b823-d161acd78d33",
+      "name": "Race_End",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2250,
+        400
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Start Race": {
+      "main": [
+        [
+          {
+            "node": "Race Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Race Payload": {
+      "main": [
+        [
+          {
+            "node": "Split Race",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Race": {
+      "main": [
+        [
+          {
+            "node": "Send Race",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Race": {
+      "main": [
+        [
+          {
+            "node": "Race Done",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Race Done": {
+      "main": [
+        [
+          {
+            "node": "Wait Race",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait Race": {
+      "main": [
+        [
+          {
+            "node": "Assert Race",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assert Race": {
+      "main": [
+        [
+          {
+            "node": "Race OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Race OK?": {
+      "main": [
+        [
+          {
+            "node": "Race_PASS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Race_FAIL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Race_PASS": {
+      "main": [
+        [
+          {
+            "node": "Race_Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Race_FAIL": {
+      "main": [
+        [
+          {
+            "node": "Race_Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Race_Report": {
+      "main": [
+        [
+          {
+            "node": "Race_End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": [
+    "axiomops",
+    "test"
+  ],
+  "staticData": null,
+  "pinData": {}
+}

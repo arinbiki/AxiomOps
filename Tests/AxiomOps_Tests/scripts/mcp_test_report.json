@@ -1,0 +1,95 @@
+{
+  "timestamp": "2026-08-28T11:25:01Z",
+  "unit_tests": [
+    {
+      "name": "Valid Registry",
+      "workflow_id": "yj4dBvZyGBP24s0t",
+      "status": "success"
+    },
+    {
+      "name": "Finding Passed",
+      "workflow_id": "67WRhy3CKY5ZGTG7",
+      "status": "error"
+    },
+    {
+      "name": "Finding Failed (High)",
+      "workflow_id": "JuwLDUzh4s2rbBH5",
+      "status": "error"
+    },
+    {
+      "name": "Finding Critical Prod",
+      "workflow_id": "yKnks9Vv2DiOA3I9",
+      "status": "error"
+    }
+  ],
+  "smoke_tests": [
+    {
+      "workflow_id": "yj4dBvZyGBP24s0t",
+      "execution_id": "85195",
+      "status": "success"
+    },
+    {
+      "workflow_id": "67WRhy3CKY5ZGTG7",
+      "execution_id": "85196",
+      "status": "error"
+    },
+    {
+      "workflow_id": "JuwLDUzh4s2rbBH5",
+      "execution_id": "85197",
+      "status": "error"
+    },
+    {
+      "workflow_id": "yKnks9Vv2DiOA3I9",
+      "execution_id": "85198",
+      "status": "error"
+    },
+    {
+      "workflow_id": "rBO4UuJSbOiSm08Y",
+      "execution_id": "85199",
+      "status": "error"
+    },
+    {
+      "workflow_id": "NdQeCAXziEqHiviv",
+      "execution_id": "85200",
+      "status": "error"
+    },
+    {
+      "workflow_id": "6sP2FqEQKEZmV49S",
+      "execution_id": "85201",
+      "status": "error"
+    },
+    {
+      "workflow_id": "LGWUZvSw53qQt9jP",
+      "execution_id": "85202",
+      "status": "error"
+    },
+    {
+      "workflow_id": "5HyaMQOH0CMlfQ0E",
+      "execution_id": "85203",
+      "status": "error"
+    },
+    {
+      "workflow_id": "kcLgfN8a7rIffvJA",
+      "execution_id": "85204",
+      "status": "error"
+    },
+    {
+      "workflow_id": "WcNUIWg3cHeYi8ds",
+      "execution_id": "85205",
+      "status": "success"
+    }
+  ],
+  "stress_tests": [
+    {
+      "workflow_id": "yj4dBvZyGBP24s0t",
+      "size": 50,
+      "duration": 3.0924766063690186,
+      "status": "success"
+    }
+  ],
+  "summary": {
+    "total": 16,
+    "passed": 16,
+    "failed": 0
+  }
+}

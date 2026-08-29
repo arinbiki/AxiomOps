@@ -1,0 +1,6 @@
+{
+  "findingKey": "CC6.6::arn:aws:s3:::prod-data-lake::SOC2",
+  "reason": "Waiting on KMS key rotation project",
+  "requestedBy": "devops-lead@example.com",
+  "expiresInDays": 14
+}

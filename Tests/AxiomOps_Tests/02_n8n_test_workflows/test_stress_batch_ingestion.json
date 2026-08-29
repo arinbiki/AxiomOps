@@ -1,0 +1,304 @@
+{
+  "name": "TEST_stress_batch_ingestion",
+  "id": "a576a5b0-b3d3-4cb0-ba01-746d312f5e59",
+  "nodes": [
+    {
+      "id": "0f1408f1-cb8b-41ec-8c7c-9803da73fdd3",
+      "name": "Start Stress",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "31856c59-cec8-4064-973a-8da90d6bc3bc",
+      "name": "Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        450,
+        300
+      ],
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    batchSize: 100,\n    runId: 'RUN-STRESS-' + Date.now(),\n    framework: 'SOC2',\n    timestamp: new Date().toISOString(),\n    startTime: Date.now()\n  }\n}];"
+      }
+    },
+    {
+      "id": "5034d24a-805e-4ce1-bcde-6482e63f1f07",
+      "name": "Generate Batch",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        650,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const cfg = $input.first().json;\nconst evidence = [];\nfor (let i = 0; i < cfg.batchSize; i++) {\n  evidence.push({\n    controlId: ['CC6.6','CC7.1','CC8.1'][i % 3],\n    resourceId: `arn:aws:s3:::stress-bucket-${String(i).padStart(4,'0')}`,\n    resourceName: `stress-bucket-${String(i).padStart(4,'0')}`,\n    service: 'aws',\n    passed: i % 5 !== 0,\n    severity: ['critical','high','medium','low'][i % 4],\n    evidencePath: `test/stress/${cfg.runId}/ev-${i}.json`,\n    rawData: { test: true, index: i }\n  });\n}\nreturn [{\n  json: {\n    source: 'ComplianceGuardPro',\n    runId: cfg.runId,\n    framework: cfg.framework,\n    timestamp: cfg.timestamp,\n    evidence: evidence,\n    startTime: cfg.startTime\n  }\n}];"
+      }
+    },
+    {
+      "id": "ea5fc2ad-6f02-47d6-b0a7-c9768d265def",
+      "name": "Send Batch",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        850,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/complianceops-finding-ingestion",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COMPLIANCEOPS-TOKEN",
+              "value": "change-me"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "24108c0a-afe6-4628-b2ea-9ad12ebc7ee2",
+      "name": "Wait 5s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        1050,
+        300
+      ],
+      "parameters": {
+        "amount": 5,
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "0ea6e699-3d17-4121-bd45-e7fc3650b652",
+      "name": "Assert Counts",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        1250,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n  (SELECT COUNT(DISTINCT finding_key) FROM findings WHERE latest_evidence_run_id = $1) as findings_created,\n  (SELECT COUNT(*) FROM evidence_events WHERE run_id = $1) as evidence_inserted,\n  (SELECT COUNT(*) FROM evidence_events WHERE run_id = $1 AND passed = false) as failed_count,\n  (SELECT COUNT(*) FROM evidence_events WHERE run_id = $1 AND passed = true) as passed_count;",
+        "options": {
+          "nodeVersion": "2.1"
+        },
+        "parameters": [
+          {
+            "name": "1",
+            "value": "={{ $json.runId }}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "b0ba8771-98e5-4c9b-81b4-1f1358035274",
+      "name": "Assert Duplicates",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        1450,
+        300
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT run_id, finding_key, COUNT(*) as cnt FROM evidence_events WHERE run_id = $1 GROUP BY run_id, finding_key HAVING COUNT(*) > 1;",
+        "options": {
+          "nodeVersion": "2.1"
+        },
+        "parameters": [
+          {
+            "name": "1",
+            "value": "={{ $json.runId }}"
+          }
+        ]
+      }
+    },
+    {
+      "id": "885bef12-1a0c-4a28-800d-cf6d4af9715b",
+      "name": "No Duplicates?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1650,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ce78c578-a23c-4005-bb23-6d48562e5f54",
+              "leftValue": "={{ $json.cnt }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "cf6f5428-e741-4c86-b2a1-772744572c5b",
+      "name": "Build Stress Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1850,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const counts = $input.all().find(i => i.json.findings_created !== undefined)?.json || {};\nconst dupes = $input.all().find(i => i.json.cnt !== undefined);\nconst cfg = $input.all().find(i => i.json.startTime)?.json || {};\nconst elapsed = Date.now() - (cfg.startTime || Date.now());\nreturn [{\n  json: {\n    test: 'stress_batch_ingestion',\n    batchSize: cfg.batchSize || 100,\n    runId: cfg.runId,\n    findingsCreated: parseInt(counts.findings_created) || 0,\n    evidenceInserted: parseInt(counts.evidence_inserted) || 0,\n    failedCount: parseInt(counts.failed_count) || 0,\n    passedCount: parseInt(counts.passed_count) || 0,\n    duplicatesFound: dupes ? parseInt(dupes.json.cnt) : 0,\n    elapsedMs: elapsed,\n    status: (parseInt(counts.evidence_inserted) === cfg.batchSize && !dupes) ? 'PASS' : 'FAIL'\n  }\n}];"
+      }
+    },
+    {
+      "id": "8118ef7e-34ca-4ddb-9d05-4f9d9988aa35",
+      "name": "Stress_End",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        2050,
+        300
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Start Stress": {
+      "main": [
+        [
+          {
+            "node": "Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Config": {
+      "main": [
+        [
+          {
+            "node": "Generate Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Batch": {
+      "main": [
+        [
+          {
+            "node": "Send Batch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Batch": {
+      "main": [
+        [
+          {
+            "node": "Wait 5s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5s": {
+      "main": [
+        [
+          {
+            "node": "Assert Counts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assert Counts": {
+      "main": [
+        [
+          {
+            "node": "Assert Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assert Duplicates": {
+      "main": [
+        [
+          {
+            "node": "No Duplicates?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "No Duplicates?": {
+      "main": [
+        [
+          {
+            "node": "Build Stress Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Stress Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Stress Report": {
+      "main": [
+        [
+          {
+            "node": "Stress_End",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": [
+    "axiomops",
+    "test"
+  ],
+  "staticData": null,
+  "pinData": {}
+}

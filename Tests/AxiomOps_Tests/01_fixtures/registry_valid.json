@@ -1,0 +1,89 @@
+{
+  "assets": [
+    {
+      "assetId": "asset-001",
+      "resourceId": "arn:aws:s3:::prod-data-lake",
+      "service": "aws",
+      "name": "prod-data-lake",
+      "environment": "production",
+      "criticality": "high",
+      "dataClassification": "pii",
+      "ownerEmail": "data-platform@example.com",
+      "team": "Data Platform",
+      "escalationEmail": "ciso@example.com",
+      "tags": [
+        "soc2",
+        "gdpr"
+      ]
+    },
+    {
+      "assetId": "asset-002",
+      "resourceId": "arn:aws:ec2:::i-123456",
+      "service": "aws",
+      "name": "web-server-01",
+      "environment": "staging",
+      "criticality": "medium",
+      "dataClassification": "internal",
+      "ownerEmail": "devops@example.com",
+      "team": "DevOps",
+      "escalationEmail": "sre@example.com",
+      "tags": [
+        "soc2"
+      ]
+    },
+    {
+      "assetId": "asset-003",
+      "resourceId": "arn:aws:rds:::prod-db",
+      "service": "aws",
+      "name": "prod-db",
+      "environment": "production",
+      "criticality": "critical",
+      "dataClassification": "phi",
+      "ownerEmail": "dba@example.com",
+      "team": "Database",
+      "escalationEmail": "ciso@example.com",
+      "tags": [
+        "hipaa",
+        "soc2"
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "controlId": "CC6.6",
+      "framework": "SOC2",
+      "description": "Encryption at rest",
+      "defaultOwnerEmail": "security-engineering@example.com",
+      "defaultSlaHours": {
+        "critical": 72,
+        "high": 168,
+        "medium": 720,
+        "low": 2160
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "framework": "SOC2",
+      "description": "Access logging enabled",
+      "defaultOwnerEmail": "security-engineering@example.com",
+      "defaultSlaHours": {
+        "critical": 24,
+        "high": 72,
+        "medium": 336,
+        "low": 720
+      }
+    },
+    {
+      "controlId": "HIPAA-164.312",
+      "framework": "HIPAA",
+      "description": "Audit controls",
+      "defaultOwnerEmail": "compliance@example.com",
+      "defaultSlaHours": {
+        "critical": 24,
+        "high": 48,
+        "medium": 168,
+        "low": 720
+      }
+    }
+  ]
+}

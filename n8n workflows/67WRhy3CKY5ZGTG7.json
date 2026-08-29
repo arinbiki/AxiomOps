@@ -1,0 +1,492 @@
+{
+  "workflow": {
+    "id": "67WRhy3CKY5ZGTG7",
+    "name": "02_finding_ingestion",
+    "active": false,
+    "isArchived": false,
+    "versionId": "b20b1090-4da3-4b32-99ac-f7a9c538a270",
+    "activeVersionId": null,
+    "triggerCount": 0,
+    "createdAt": "2026-08-09T16:35:33.994Z",
+    "updatedAt": "2026-08-24T05:54:29.474Z",
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true,
+      "timeSavedMode": "fixed",
+      "callerPolicy": "workflowsFromSameOwner"
+    },
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Authenticate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Authenticate": {
+        "main": [
+          [
+            {
+              "node": "Normalize Events",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Normalize Events": {
+        "main": [
+          [
+            {
+              "node": "Split Events",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split Events": {
+        "main": [
+          [
+            {
+              "node": "Insert Evidence",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert Evidence": {
+        "main": [
+          [
+            {
+              "node": "Is New?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Is New?": {
+        "main": [
+          [
+            {
+              "node": "Passed?",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Skip Duplicate",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Passed?": {
+        "main": [
+          [
+            {
+              "node": "Update Passed Evidence",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Upsert Failed Finding",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert Failed Finding": {
+        "main": [
+          [
+            {
+              "node": "Owner Resolver",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Owner Resolver": {
+        "main": [
+          [
+            {
+              "node": "Risk Prioritizer",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Risk Prioritizer": {
+        "main": [
+          [
+            {
+              "node": "Remediation Orchestrator",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Remediation Orchestrator": {
+        "main": [
+          [
+            {
+              "node": "Build Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Passed Evidence": {
+        "main": [
+          [
+            {
+              "node": "Trigger Closure",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Trigger Closure": {
+        "main": [
+          [
+            {
+              "node": "Build Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Response": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "parameters": {
+          "path": "complianceops-finding-ingestion",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "4bc32119-af3f-44ee-98bc-5dc774171cc9",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          -1472,
+          80
+        ],
+        "webhookId": "beddc9c8-a87f-4231-8f12-ce31e866df01"
+      },
+      {
+        "parameters": {
+          "jsCode": "const headers = $input.first().json.headers || {};\nconst token = headers['x-complianceops-token'];\nconst expected = $env.COMPLIANCEOPS_INGEST_TOKEN || 'change-me';\nif (!token || token !== expected) throw new Error('Unauthorized');\nconst body = $input.first().json.body || {};\nif (!body.runId || !body.framework || !body.evidence) throw new Error('Missing required fields');\nif (!Array.isArray(body.evidence)) throw new Error('evidence must be array');\nreturn [{ json: body }];"
+        },
+        "id": "ac1703d7-f0cb-44a3-8da0-8b94e1840712",
+        "name": "Authenticate",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -1280,
+          80
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const body = $input.first().json;\nfunction redact(obj) {\n  if (!obj) return obj;\n  const clone = JSON.parse(JSON.stringify(obj));\n  const sens = /token|password|secret|key|authorization|cookie|credential/i;\n  const walk = (o) => {\n    if (!o || typeof o !== 'object') return;\n    for (const k of Object.keys(o)) {\n      if (typeof o[k] === 'string' && sens.test(k)) o[k] = '[REDACTED]';\n      else if (o[k] && typeof o[k] === 'object') walk(o[k]);\n    }\n  };\n  walk(clone);\n  return clone;\n}\nconst events = [];\nfor (const e of body.evidence) {\n  if (!e.controlId || !e.resourceId) continue;\n  const findingKey = `${e.controlId}::${e.resourceId}::${body.framework}`;\n  events.push({\n    json: {\n      runId: body.runId, source: body.source || 'unknown', framework: body.framework,\n      timestamp: body.timestamp, findingKey, controlId: e.controlId, resourceId: e.resourceId,\n      resourceName: e.resourceName || e.resourceId, service: e.service || 'unknown',\n      passed: e.passed === true, severity: e.severity || 'medium',\n      evidencePath: e.evidencePath || null, rawData: redact(e.rawData || e)\n    }\n  });\n}\nif (events.length === 0) throw new Error('No valid evidence events');\nreturn events;"
+        },
+        "id": "a2fe776e-166e-4324-ad65-11a50661d42f",
+        "name": "Normalize Events",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -1072,
+          80
+        ]
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "c201dcd8-c4eb-43f2-9a4a-73e9a94bca85",
+        "name": "Split Events",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          -880,
+          80
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO evidence_events (run_id, finding_key, control_id, framework, resource_id, service, passed, severity, evidence_path, raw_data, collected_at)\nVALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,now())\nON CONFLICT (run_id, finding_key) DO NOTHING RETURNING id;",
+          "options": {}
+        },
+        "id": "1fefdd09-21f6-49d8-9f85-5dacbd241283",
+        "name": "Insert Evidence",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -672,
+          80
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "449d2e13-db58-4609-8b87-757963d23da7",
+                "leftValue": "={{ $json.id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "isNotEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "aa91bf36-0f4d-40ef-b717-07457bfd501b",
+        "name": "Is New?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          -480,
+          80
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "4436d9d9-33d9-45d3-bcfa-87a4d86e0d00",
+                "leftValue": "={{ $json.passed }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "c8a9450e-6af2-452f-9e00-c7987ea4523e",
+        "name": "Passed?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          -272,
+          80
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO findings (finding_key, control_id, framework, resource_id, service, status, severity, occurrence_count, first_seen, last_seen, latest_evidence_run_id, latest_evidence_passed, updated_at)\nVALUES ($1,$2,$3,$4,$5,'open',$6,1,now(),now(),$7,false,now())\nON CONFLICT (finding_key) DO UPDATE SET\n  status = CASE WHEN findings.status='closed' THEN 'reopened' ELSE findings.status END,\n  severity = EXCLUDED.severity, last_seen = EXCLUDED.last_seen,\n  occurrence_count = CASE WHEN findings.status='closed' THEN 1 ELSE findings.occurrence_count + 1 END,\n  latest_evidence_run_id = EXCLUDED.latest_evidence_run_id, latest_evidence_passed = false,\n  closed_at = NULL, closure_reason = NULL, updated_at = now() RETURNING *;",
+          "options": {}
+        },
+        "id": "cea241c5-2e6b-419a-918a-83cfe77efafb",
+        "name": "Upsert Failed Finding",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -80,
+          -32
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "value": "03_owner_resolver",
+            "mode": "name"
+          },
+          "options": {}
+        },
+        "id": "046a1237-c2ab-4d33-be12-f71be21107ee",
+        "name": "Owner Resolver",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          128,
+          -80
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "value": "04_risk_prioritizer",
+            "mode": "name"
+          },
+          "options": {}
+        },
+        "id": "02ffb40b-5b5a-4142-85ed-d50a3f6ec60e",
+        "name": "Risk Prioritizer",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          128,
+          32
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "value": "05_remediation_orchestrator",
+            "mode": "name"
+          },
+          "options": {}
+        },
+        "id": "263c3c78-bf12-4c19-b1be-a8552676fe52",
+        "name": "Remediation Orchestrator",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          336,
+          -32
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE findings SET latest_evidence_run_id=$2, latest_evidence_passed=true, last_seen=now(), updated_at=now()\nWHERE finding_key=$1 RETURNING *;",
+          "options": {}
+        },
+        "id": "d9f96572-1a7a-4b3b-9e0e-8a00605a08d3",
+        "name": "Update Passed Evidence",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -80,
+          176
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "value": "08_closure_validator",
+            "mode": "name"
+          },
+          "options": {}
+        },
+        "id": "97bbb532-f453-49cd-a01a-9ffddd0a9337",
+        "name": "Trigger Closure",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          128,
+          176
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{\n  json: { status: 'accepted', runId: $input.first().json.runId, processed: true, timestamp: new Date().toISOString() }\n}];"
+        },
+        "id": "315c09e1-5b85-4ae8-a414-60889bc143f1",
+        "name": "Build Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          336,
+          80
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify($json) }}",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "id": "1d074720-201f-4f81-97f0-cba489b0c098",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          528,
+          80
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "5044d986-68ce-4724-92f4-093b2b992970",
+        "name": "Skip Duplicate",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          -272,
+          272
+        ]
+      }
+    ],
+    "activeVersion": null,
+    "tags": [],
+    "meta": null,
+    "parentFolderId": null,
+    "scopes": [
+      "execution:reveal",
+      "workflow:create",
+      "workflow:delete",
+      "workflow:disableRedaction",
+      "workflow:enableRedaction",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:export",
+      "workflow:import",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:unshare",
+      "workflow:update"
+    ],
+    "canExecute": true
+  },
+  "triggerInfo": "This workflow has the following trigger(s):\n\n\nWebhook trigger(s):\n\n\n\t\t\t\t<trigger 1>\n\t\t\t\t\t - Node name: Webhook\n\t\t\t\t\t - Base URL: https://ubuntu.arindam818.cloud/\n\t\t\t\t\t - Production path: /webhook/complianceops-finding-ingestion\n\t\t\t\t\t - Test path: /webhook-test/complianceops-finding-ingestion\n\t\t\t\t\t - HTTP Method: GET\n\t\t\t\t\t - Response Mode: Webhook is configured to respond using \"Respond to Webhook\" node.\n\t\t\t\t\t - No credentials required for this webhook.\n\t\t\t\t</trigger 1>"
+}

@@ -1,0 +1,336 @@
+{
+  "workflow": {
+    "id": "JuwLDUzh4s2rbBH5",
+    "name": "01_registry_sync",
+    "active": false,
+    "isArchived": false,
+    "versionId": "ffc056ee-2948-4254-ad16-b7bf2bc241f7",
+    "activeVersionId": null,
+    "triggerCount": 0,
+    "createdAt": "2026-08-09T13:06:40.255Z",
+    "updatedAt": "2026-08-24T05:55:03.518Z",
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true,
+      "timeSavedMode": "fixed",
+      "callerPolicy": "workflowsFromSameOwner"
+    },
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Validate Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate Payload": {
+        "main": [
+          [
+            {
+              "node": "If Assets",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "If Assets": {
+        "main": [
+          [
+            {
+              "node": "Split Assets",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Split Controls",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split Assets": {
+        "main": [
+          [
+            {
+              "node": "Upsert Asset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert Asset": {
+        "main": [
+          [
+            {
+              "node": "Asset Done",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Asset Done": {
+        "main": [
+          [
+            {
+              "node": "Build Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Split Controls": {
+        "main": [
+          [
+            {
+              "node": "Upsert Control",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Upsert Control": {
+        "main": [
+          [
+            {
+              "node": "Control Done",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Control Done": {
+        "main": [
+          [
+            {
+              "node": "Build Summary",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Summary": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "parameters": {
+          "path": "complianceops-registry-sync",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "e49efa7e-28a9-4e92-a573-dfd86f53924e",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          -864,
+          160
+        ],
+        "webhookId": "9400a046-f558-49f3-ac94-25a78b2304ef"
+      },
+      {
+        "parameters": {
+          "jsCode": "const body = $input.first().json.body || $input.first().json;\nif (!body.assets || !Array.isArray(body.assets)) throw new Error('assets array required');\nif (!body.controls || !Array.isArray(body.controls)) throw new Error('controls array required');\n\nconst assets = body.assets.map(a => {\n  if (!a.assetId || !a.resourceId || !a.service) throw new Error('asset requires assetId, resourceId, service');\n  return { json: { ...a, tags: a.tags || [] } };\n});\nconst controls = body.controls.map(c => {\n  if (!c.controlId || !c.framework) throw new Error('control requires controlId, framework');\n  return { json: c };\n});\n\nreturn [\n  { json: { type: 'assets', items: assets, count: assets.length } },\n  { json: { type: 'controls', items: controls, count: controls.length } }\n];"
+        },
+        "id": "05be5612-6a18-404d-8dad-83e6cbaf74bc",
+        "name": "Validate Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -656,
+          160
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "a485ed2d-8b65-4478-a20b-7c54303c3f4b",
+                "leftValue": "={{ $json.type }}",
+                "rightValue": "assets",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "a1c1548a-2cbb-412a-87ac-e2cbebe04768",
+        "name": "If Assets",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          -464,
+          160
+        ]
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "024badef-7e75-4e42-ad37-171652c5387b",
+        "name": "Split Assets",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          -256,
+          48
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO assets (asset_id, resource_id, service, name, environment, criticality, data_classification, owner_email, team, escalation_email, tags, active, updated_at)\nVALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,true,now())\nON CONFLICT (resource_id, service) DO UPDATE SET\n  asset_id=EXCLUDED.asset_id, name=EXCLUDED.name, environment=EXCLUDED.environment,\n  criticality=EXCLUDED.criticality, data_classification=EXCLUDED.data_classification,\n  owner_email=EXCLUDED.owner_email, team=EXCLUDED.team, escalation_email=EXCLUDED.escalation_email,\n  tags=EXCLUDED.tags, active=true, updated_at=now() RETURNING *;",
+          "options": {}
+        },
+        "id": "b7c3d7a6-1b90-43ed-9051-15fb3474f46c",
+        "name": "Upsert Asset",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -64,
+          48
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "d6009d0c-10ab-465d-bcfe-2e904c7b04c0",
+        "name": "Asset Done",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          144,
+          48
+        ]
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "id": "5cc4d38f-7722-4a25-8d6c-9fce1e58340c",
+        "name": "Split Controls",
+        "type": "n8n-nodes-base.splitInBatches",
+        "typeVersion": 3,
+        "position": [
+          -256,
+          256
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO controls (control_id, framework, description, default_owner_email, default_sla_hours, active, updated_at)\nVALUES ($1,$2,$3,$4,$5,true,now())\nON CONFLICT (control_id, framework) DO UPDATE SET\n  description=EXCLUDED.description, default_owner_email=EXCLUDED.default_owner_email,\n  default_sla_hours=EXCLUDED.default_sla_hours, active=true, updated_at=now() RETURNING *;",
+          "options": {}
+        },
+        "id": "9e07cac0-40ed-4e05-a845-d49a6e409023",
+        "name": "Upsert Control",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -64,
+          256
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "f08f5c4c-f700-446c-ad51-372677ffbd90",
+        "name": "Control Done",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          144,
+          256
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    status: 'synced',\n    assets: $input.all().filter(i => i.json.asset_id).length,\n    controls: $input.all().filter(i => i.json.control_id).length,\n    timestamp: new Date().toISOString()\n  }\n}];"
+        },
+        "id": "7ade68dc-b5bc-4fbf-bdfe-032f2ff64bcb",
+        "name": "Build Summary",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          352,
+          160
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify($json) }}",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "id": "4c8a365c-98f3-443f-b43e-5ee51b21b0a4",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          544,
+          160
+        ]
+      }
+    ],
+    "activeVersion": null,
+    "tags": [],
+    "meta": null,
+    "parentFolderId": null,
+    "scopes": [
+      "execution:reveal",
+      "workflow:create",
+      "workflow:delete",
+      "workflow:disableRedaction",
+      "workflow:enableRedaction",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:export",
+      "workflow:import",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:unshare",
+      "workflow:update"
+    ],
+    "canExecute": true
+  },
+  "triggerInfo": "This workflow has the following trigger(s):\n\n\nWebhook trigger(s):\n\n\n\t\t\t\t<trigger 1>\n\t\t\t\t\t - Node name: Webhook\n\t\t\t\t\t - Base URL: https://ubuntu.arindam818.cloud/\n\t\t\t\t\t - Production path: /webhook/complianceops-registry-sync\n\t\t\t\t\t - Test path: /webhook-test/complianceops-registry-sync\n\t\t\t\t\t - HTTP Method: GET\n\t\t\t\t\t - Response Mode: Webhook is configured to respond using \"Respond to Webhook\" node.\n\t\t\t\t\t - No credentials required for this webhook.\n\t\t\t\t</trigger 1>"
+}

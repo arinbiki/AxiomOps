@@ -1,0 +1,309 @@
+{
+  "workflow": {
+    "id": "kcLgfN8a7rIffvJA",
+    "name": "08_closure_validator",
+    "active": false,
+    "isArchived": false,
+    "versionId": "ca3364a4-c87c-4355-bd41-864edf2527ad",
+    "activeVersionId": null,
+    "triggerCount": 0,
+    "createdAt": "2026-08-09T16:38:32.911Z",
+    "updatedAt": "2026-08-24T06:03:00.595Z",
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true,
+      "timeSavedMode": "fixed",
+      "callerPolicy": "workflowsFromSameOwner"
+    },
+    "connections": {
+      "Execute Trigger": {
+        "main": [
+          [
+            {
+              "node": "Fetch Finding",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Finding": {
+        "main": [
+          [
+            {
+              "node": "Recent Evidence",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Recent Evidence": {
+        "main": [
+          [
+            {
+              "node": "Evaluate Closure",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Evaluate Closure": {
+        "main": [
+          [
+            {
+              "node": "Close?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Close?": {
+        "main": [
+          [
+            {
+              "node": "Close Finding",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "No Close",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Close Finding": {
+        "main": [
+          [
+            {
+              "node": "Close Task",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Close Task": {
+        "main": [
+          [
+            {
+              "node": "Audit Closure",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Audit Closure": {
+        "main": [
+          [
+            {
+              "node": "End",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "No Close": {
+        "main": [
+          [
+            {
+              "node": "End",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "82cbebb9-3276-4a45-b56a-aef6455b517e",
+        "name": "Execute Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          -1472,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM findings WHERE finding_key = $1 LIMIT 1;",
+          "options": {}
+        },
+        "id": "da49b7f1-70b7-4150-b4b1-560a59bfe18d",
+        "name": "Fetch Finding",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -1264,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT passed FROM evidence_events WHERE finding_key = $1 ORDER BY collected_at DESC LIMIT 2;",
+          "options": {}
+        },
+        "id": "2f467bf3-3601-441f-a73e-6ab787903c04",
+        "name": "Recent Evidence",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -1072,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const finding = $input.all().find(i => i.json.finding_key)?.json || {};\nconst evidence = $input.all().filter(i => i.json.passed !== undefined).map(i => i.json);\nconst required = parseInt($env.REQUIRED_CONSECUTIVE_PASSES || '1', 10);\nconst passCount = evidence.slice(0, required).filter(e => e.passed === true).length;\nconst shouldClose = passCount >= required;\nreturn [{\n  json: {\n    findingKey: finding.finding_key, shouldClose, passCount, requiredPasses: required,\n    closureReason: shouldClose ? 'consecutive_evidence_passed' : 'insufficient_passes'\n  }\n}];"
+        },
+        "id": "d7eba84d-0cd9-4565-b266-642ff61471da",
+        "name": "Evaluate Closure",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -864,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "158b3910-ca15-40b6-a927-0ab6ae528cf0",
+                "leftValue": "={{ $json.shouldClose }}",
+                "rightValue": true,
+                "operator": {
+                  "type": "boolean",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "d29291bc-7cd7-4e5c-a28f-149b93b5ba11",
+        "name": "Close?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          -672,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE findings SET status='closed', closed_at=now(), closure_reason=$2, exception_active=false, updated_at=now() WHERE finding_key=$1 RETURNING *;",
+          "options": {}
+        },
+        "id": "7d20f879-3c54-4f7b-8e6d-4938b56d0101",
+        "name": "Close Finding",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -464,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE remediation_tasks SET status='closed', updated_at=now() WHERE finding_key=$1 AND status='open';",
+          "options": {}
+        },
+        "id": "6a619afd-fc4f-4dae-aee9-98a9c0e7b373",
+        "name": "Close Task",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -272,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO audit_log (entity_type, entity_id, action, actor, payload, created_at) VALUES ('finding',$1,'closed','system',$2,now());",
+          "options": {}
+        },
+        "id": "63c41887-0628-444d-a2bc-035e6f303a23",
+        "name": "Audit Closure",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -64,
+          0
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "d60583a2-a50c-45fc-ac4a-1dcea6e82ab5",
+        "name": "No Close",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          -464,
+          208
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "3a8f4686-0f9c-449d-9bac-a31db2960fcc",
+        "name": "End",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          144,
+          112
+        ]
+      }
+    ],
+    "activeVersion": null,
+    "tags": [],
+    "meta": null,
+    "parentFolderId": null,
+    "scopes": [
+      "execution:reveal",
+      "workflow:create",
+      "workflow:delete",
+      "workflow:disableRedaction",
+      "workflow:enableRedaction",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:export",
+      "workflow:import",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:unshare",
+      "workflow:update"
+    ],
+    "canExecute": true
+  },
+  "triggerInfo": "This workflow has no production triggers (Schedule, Webhook, Form, or Chat). It can only be executed in manual mode."
+}

@@ -1,0 +1,20 @@
+{
+  "source": "ComplianceGuardPro",
+  "runId": "RUN-TEST-005",
+  "framework": "HIPAA",
+  "timestamp": "2026-08-24T14:00:00Z",
+  "evidence": [
+    {
+      "controlId": "HIPAA-164.312",
+      "resourceId": "arn:aws:rds:::prod-db",
+      "resourceName": "prod-db",
+      "service": "aws",
+      "passed": false,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/hipaa/run-test-005/audit.json",
+      "rawData": {
+        "auditEnabled": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,140 @@
+{
+  "workflow": {
+    "id": "yj4dBvZyGBP24s0t",
+    "name": "00_error_handler",
+    "active": false,
+    "isArchived": false,
+    "versionId": "e2232ba4-8ea4-4711-aadd-b482f6129abb",
+    "activeVersionId": null,
+    "triggerCount": 0,
+    "createdAt": "2026-08-09T13:06:22.136Z",
+    "updatedAt": "2026-08-24T05:54:02.644Z",
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true,
+      "timeSavedMode": "fixed",
+      "callerPolicy": "workflowsFromSameOwner"
+    },
+    "connections": {
+      "Error Trigger": {
+        "main": [
+          [
+            {
+              "node": "Format Error",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Format Error": {
+        "main": [
+          [
+            {
+              "node": "Send Alert",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Alert": {
+        "main": [
+          [
+            {
+              "node": "End",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "d6eac45a-47b8-4e5f-b2cc-c18e2aee3dec",
+        "name": "Error Trigger",
+        "type": "n8n-nodes-base.errorTrigger",
+        "typeVersion": 1,
+        "position": [
+          -224,
+          -64
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const error = $input.first().json;\nreturn [{\n  json: {\n    workflow: error.workflow?.name || 'Unknown Workflow',\n    executionId: error.execution?.id || 'Unknown Execution',\n    node: error.execution?.lastNodeExecuted || 'Unknown Node',\n    message: error.execution?.error?.message || 'Unknown error',\n    timestamp: new Date().toISOString()\n  }\n}];"
+        },
+        "id": "ad8a4a79-5a35-4731-950d-567db081e4d0",
+        "name": "Format Error",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -32,
+          -64
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.ALERT_WEBHOOK_URL || 'http://localhost:3000/alert' }}",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "id": "fb4568a8-4161-40dd-a6a7-64a82c54b292",
+        "name": "Send Alert",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          176,
+          -64
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "a4fe12e0-f353-4ee5-a3b0-b1cdc65ebc42",
+        "name": "End",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          384,
+          -64
+        ]
+      }
+    ],
+    "activeVersion": null,
+    "tags": [],
+    "meta": null,
+    "parentFolderId": null,
+    "scopes": [
+      "execution:reveal",
+      "workflow:create",
+      "workflow:delete",
+      "workflow:disableRedaction",
+      "workflow:enableRedaction",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:export",
+      "workflow:import",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:unshare",
+      "workflow:update"
+    ],
+    "canExecute": true
+  },
+  "triggerInfo": "This workflow has no production triggers (Schedule, Webhook, Form, or Chat). It can only be executed in manual mode."
+}

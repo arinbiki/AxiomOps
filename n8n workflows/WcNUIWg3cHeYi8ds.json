@@ -1,0 +1,164 @@
+{
+  "workflow": {
+    "id": "WcNUIWg3cHeYi8ds",
+    "name": "09_ollama_assistant",
+    "active": false,
+    "isArchived": false,
+    "versionId": "3d70c4d1-c1f1-403e-b3d5-76937bd443e8",
+    "activeVersionId": null,
+    "triggerCount": 0,
+    "createdAt": "2026-08-09T16:38:53.808Z",
+    "updatedAt": "2026-08-24T06:03:09.274Z",
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true
+    },
+    "connections": {
+      "Execute Trigger": {
+        "main": [
+          [
+            {
+              "node": "Build Prompt",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Prompt": {
+        "main": [
+          [
+            {
+              "node": "Ollama Chat",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ollama Chat": {
+        "main": [
+          [
+            {
+              "node": "Parse Response",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Parse Response": {
+        "main": [
+          [
+            {
+              "node": "Return AI",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "1cbfc1af-5f9f-402f-916c-cc0e9786cd5b",
+        "name": "Execute Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          -448,
+          -16
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const input = $input.first().json;\nconst task = input.task || 'general_summary';\nconst model = input.model || 'qwen2.5:3b';\nconst finding = input.finding || input.digest || {};\n\nfunction safeString(obj, max=2000) {\n  const s = JSON.stringify(obj, null, 2);\n  return s.length > max ? s.slice(0, max) + '...[truncated]' : s;\n}\n\nlet system = 'You are a compliance operations assistant. Draft clear, factual text only.';\nlet user = safeString(finding);\n\nif (task === 'remediation_summary') {\n  system = 'You are a compliance remediation writer. Write concise, factual ticket text. Do not decide ownership, severity, closure, or risk acceptance.';\n  user = `Draft a remediation summary for this finding:\n${safeString(finding)}\n\nReturn sections: Issue, Likely cause, Recommended remediation, Auditor note`;\n}\nif (task === 'weekly_governance_digest') {\n  system = 'You are a compliance operations analyst. Summarize operational metrics for leadership. Do not invent facts.';\n  user = `Summarize this digest:\n${safeString(finding)}\n\nReturn: Executive summary, Top risks, Recommended follow-ups`;\n}\n\nreturn [{\n  json: { model, messages: [{role:'system',content:system},{role:'user',content:user}], stream: false, options: { temperature: 0.2, num_predict: input.maxTokens || 500 } }\n}];"
+        },
+        "id": "534b9996-779a-4788-a2b5-083f7f9387b9",
+        "name": "Build Prompt",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -256,
+          -16
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "http://localhost:11434/api/chat",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {
+            "timeout": 60000
+          }
+        },
+        "id": "dbeab564-86bb-4211-bece-d4bbf137ca16",
+        "name": "Ollama Chat",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          -48,
+          -16
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const resp = $input.first().json;\nconst text = resp?.message?.content || resp?.response || '';\nreturn [{ json: { aiText: text.trim(), aiStatus: text.trim() ? 'ok' : 'empty' } }];"
+        },
+        "id": "40707f70-2c87-47c8-ad25-e0f7cb2476b3",
+        "name": "Parse Response",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          160,
+          -16
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    aiText: $input.first().json.aiText,\n    aiStatus: $input.first().json.aiStatus,\n    findingKey: $input.all()[0]?.json?.findingKey || null\n  }\n}];"
+        },
+        "id": "ebf717bc-cf7b-469b-a95f-fda1b6deb582",
+        "name": "Return AI",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          352,
+          -16
+        ]
+      }
+    ],
+    "activeVersion": null,
+    "tags": [],
+    "meta": null,
+    "parentFolderId": null,
+    "scopes": [
+      "execution:reveal",
+      "workflow:create",
+      "workflow:delete",
+      "workflow:disableRedaction",
+      "workflow:enableRedaction",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:export",
+      "workflow:import",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:unshare",
+      "workflow:update"
+    ],
+    "canExecute": true
+  },
+  "triggerInfo": "This workflow has no production triggers (Schedule, Webhook, Form, or Chat). It can only be executed in manual mode."
+}

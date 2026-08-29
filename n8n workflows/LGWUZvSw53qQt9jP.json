@@ -1,0 +1,298 @@
+{
+  "workflow": {
+    "id": "LGWUZvSw53qQt9jP",
+    "name": "06b_exception_decision",
+    "active": false,
+    "isArchived": false,
+    "versionId": "11fde410-893c-4872-9ce2-dcae25592d3f",
+    "activeVersionId": null,
+    "triggerCount": 0,
+    "createdAt": "2026-08-09T16:37:49.560Z",
+    "updatedAt": "2026-08-24T05:58:28.469Z",
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true,
+      "timeSavedMode": "fixed",
+      "callerPolicy": "workflowsFromSameOwner"
+    },
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Validate Decision",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate Decision": {
+        "main": [
+          [
+            {
+              "node": "Fetch Exception",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Exception": {
+        "main": [
+          [
+            {
+              "node": "Approve?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Approve?": {
+        "main": [
+          [
+            {
+              "node": "Activate Exception",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Reject Exception",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Activate Exception": {
+        "main": [
+          [
+            {
+              "node": "Update Finding Accepted",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Finding Accepted": {
+        "main": [
+          [
+            {
+              "node": "Audit Log",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Reject Exception": {
+        "main": [
+          [
+            {
+              "node": "Audit Log",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Audit Log": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "parameters": {
+          "path": "complianceops-exception-decision",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "2931529c-510b-4490-9e43-bff03f81d2e0",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          -1296,
+          128
+        ],
+        "webhookId": "9ea03948-bfaa-4f52-9710-6745b62af17a"
+      },
+      {
+        "parameters": {
+          "jsCode": "const query = $input.first().json.query || {};\nif (!query.exceptionId || !query.decision) throw new Error('exceptionId and decision required');\nif (!['approve','reject'].includes(query.decision)) throw new Error('decision must be approve or reject');\nreturn [{ json: { exceptionId: query.exceptionId, decision: query.decision, approver: query.approver || 'unknown-approver' } }];"
+        },
+        "id": "f87c6632-def9-4acc-8a08-a3c2fcb62762",
+        "name": "Validate Decision",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -1104,
+          128
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM exceptions WHERE exception_id = $1 LIMIT 1;",
+          "options": {}
+        },
+        "id": "23b91c3d-021c-4b0f-8195-7a7712852e4a",
+        "name": "Fetch Exception",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -896,
+          128
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "5ec0c622-3cc1-4d5b-a2e4-922c16632819",
+                "leftValue": "={{ $json.decision }}",
+                "rightValue": "approve",
+                "operator": {
+                  "type": "string",
+                  "operation": "equals"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "789a1f88-389f-46d0-82ce-fc5666acf2c1",
+        "name": "Approve?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          -704,
+          128
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE exceptions SET status='active', approved_by=$2, starts_at=now(), expires_at=now() + ($3 || ' days')::interval, updated_at=now() WHERE exception_id=$1 RETURNING *;",
+          "options": {}
+        },
+        "id": "3ad207a5-ae36-44ab-b920-7b777f549a15",
+        "name": "Activate Exception",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -496,
+          16
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE findings SET status='risk_accepted', exception_active=true, updated_at=now() WHERE finding_key=$1 RETURNING *;",
+          "options": {}
+        },
+        "id": "2da30995-a2e5-4358-a6c0-5201797a70f3",
+        "name": "Update Finding Accepted",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -304,
+          16
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE exceptions SET status='rejected', approved_by=$2, updated_at=now() WHERE exception_id=$1 RETURNING *;",
+          "options": {}
+        },
+        "id": "64aa60a8-7e63-4353-bb01-97af126d7dd9",
+        "name": "Reject Exception",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -496,
+          224
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO audit_log (entity_type, entity_id, action, actor, payload, created_at) VALUES ($1,$2,$3,$4,$5,now()) RETURNING *;",
+          "options": {}
+        },
+        "id": "06c1e602-49a4-4ff4-a5aa-50e261befcbc",
+        "name": "Audit Log",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -96,
+          128
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ status: $json.decision, exceptionId: $json.exceptionId }) }}",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "id": "d4b01668-27f6-491d-a2e0-0ff294e84d07",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          112,
+          128
+        ]
+      }
+    ],
+    "activeVersion": null,
+    "tags": [],
+    "meta": null,
+    "parentFolderId": null,
+    "scopes": [
+      "execution:reveal",
+      "workflow:create",
+      "workflow:delete",
+      "workflow:disableRedaction",
+      "workflow:enableRedaction",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:export",
+      "workflow:import",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:unshare",
+      "workflow:update"
+    ],
+    "canExecute": true
+  },
+  "triggerInfo": "This workflow has the following trigger(s):\n\n\nWebhook trigger(s):\n\n\n\t\t\t\t<trigger 1>\n\t\t\t\t\t - Node name: Webhook\n\t\t\t\t\t - Base URL: https://ubuntu.arindam818.cloud/\n\t\t\t\t\t - Production path: /webhook/complianceops-exception-decision\n\t\t\t\t\t - Test path: /webhook-test/complianceops-exception-decision\n\t\t\t\t\t - HTTP Method: GET\n\t\t\t\t\t - Response Mode: Webhook is configured to respond using \"Respond to Webhook\" node.\n\t\t\t\t\t - No credentials required for this webhook.\n\t\t\t\t</trigger 1>"
+}

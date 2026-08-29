@@ -1,0 +1,450 @@
+{
+  "workflow": {
+    "id": "NdQeCAXziEqHiviv",
+    "name": "05_remediation_orchestrator",
+    "active": false,
+    "isArchived": false,
+    "versionId": "84cfdf2f-df12-4607-90b0-12d4c58d0334",
+    "activeVersionId": null,
+    "triggerCount": 0,
+    "createdAt": "2026-08-09T16:36:40.580Z",
+    "updatedAt": "2026-08-24T05:57:19.841Z",
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true,
+      "timeSavedMode": "fixed",
+      "callerPolicy": "workflowsFromSameOwner"
+    },
+    "connections": {
+      "Execute Trigger": {
+        "main": [
+          [
+            {
+              "node": "Fetch Finding",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Finding": {
+        "main": [
+          [
+            {
+              "node": "Check Exception",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Exception": {
+        "main": [
+          [
+            {
+              "node": "Exception Active?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Exception Active?": {
+        "main": [
+          [
+            {
+              "node": "Mark Risk Accepted",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Check Ticket",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Mark Risk Accepted": {
+        "main": [
+          [
+            {
+              "node": "End",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Check Ticket": {
+        "main": [
+          [
+            {
+              "node": "Ticket Exists?",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ticket Exists?": {
+        "main": [
+          [
+            {
+              "node": "No Ticket Needed",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "Build Ticket Payload",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Ticket Payload": {
+        "main": [
+          [
+            {
+              "node": "Ollama Draft",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ollama Draft": {
+        "main": [
+          [
+            {
+              "node": "Create Jira Ticket",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Create Jira Ticket": {
+        "main": [
+          [
+            {
+              "node": "Save Remediation Task",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Save Remediation Task": {
+        "main": [
+          [
+            {
+              "node": "Update Finding Ticket",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Finding Ticket": {
+        "main": [
+          [
+            {
+              "node": "End",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "No Ticket Needed": {
+        "main": [
+          [
+            {
+              "node": "End",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "6bb62b98-316f-4962-a657-b1e2e711a9fb",
+        "name": "Execute Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          -864,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM findings WHERE finding_key = $1 LIMIT 1;",
+          "options": {}
+        },
+        "id": "c2826e66-6231-4081-a018-c52e7fdd79ca",
+        "name": "Fetch Finding",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -672,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM exceptions WHERE finding_key = $1 AND status = 'active' AND starts_at <= now() AND expires_at > now() ORDER BY created_at DESC LIMIT 1;",
+          "options": {}
+        },
+        "id": "ae85346c-c5c5-440c-b9e1-bbce8bbcd6f8",
+        "name": "Check Exception",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -464,
+          -16
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "b56febfc-5292-4abf-9979-627a6eab8140",
+                "leftValue": "={{ $json.exception_id }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "isNotEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "b3919e18-8922-4542-b439-7ff87eb718ed",
+        "name": "Exception Active?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          -272,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE findings SET status='risk_accepted', exception_active=true, updated_at=now() WHERE finding_key=$1 RETURNING *;",
+          "options": {}
+        },
+        "id": "8ab65f0d-5891-46b2-9bc5-d5aaeb6c6fa2",
+        "name": "Mark Risk Accepted",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -64,
+          -16
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM remediation_tasks WHERE finding_key = $1 AND status = 'open' ORDER BY created_at DESC LIMIT 1;",
+          "options": {}
+        },
+        "id": "2288c5ba-522f-4900-93de-158047ab6fb2",
+        "name": "Check Ticket",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -64,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "conditions": {
+            "options": {
+              "caseSensitive": true,
+              "leftValue": "",
+              "typeValidation": "strict",
+              "version": 1
+            },
+            "conditions": [
+              {
+                "id": "a21a245f-5a14-4ba4-8a51-4b46ccb90b1f",
+                "leftValue": "={{ $json.ticket_key }}",
+                "rightValue": "",
+                "operator": {
+                  "type": "string",
+                  "operation": "isNotEmpty"
+                }
+              }
+            ],
+            "combinator": "and"
+          },
+          "options": {}
+        },
+        "id": "85544ffa-dd92-426d-a176-05f5f89d9d75",
+        "name": "Ticket Exists?",
+        "type": "n8n-nodes-base.if",
+        "typeVersion": 2,
+        "position": [
+          144,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const finding = $input.first().json;\nconst summary = `[ComplianceOps][${finding.priority || 'P3'}] ${finding.control_id} failed on ${finding.resource_id}`;\nconst desc = `Control failure detected.\n\nFramework: ${finding.framework}\nControl: ${finding.control_id}\nResource: ${finding.resource_id}\nService: ${finding.service}\nSeverity: ${finding.severity}\nRisk Score: ${finding.risk_score}\nPriority: ${finding.priority}\nOwner: ${finding.owner_email}\nSLA Due: ${finding.sla_due}\nOccurrence Count: ${finding.occurrence_count}\nRepeated Failure: ${finding.repeated_failure}\n\nGenerated by Compliance Control Operations Suite.`;\n\nreturn [{\n  json: { finding, summary, deterministicDescription: desc }\n}];"
+        },
+        "id": "d9d5b25a-a67a-4893-a622-ca7004618133",
+        "name": "Build Ticket Payload",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          336,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "value": "09_ollama_assistant",
+            "mode": "name"
+          },
+          "options": {}
+        },
+        "id": "f2ff90cd-d91d-48b0-8295-70a08e611f8c",
+        "name": "Ollama Draft",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          544,
+          48
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.JIRA_URL || 'https://your-domain.atlassian.net' }}/rest/api/2/issue",
+          "authentication": "genericCredentialType",
+          "genericAuthType": "httpHeaderAuth",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "id": "6d80703d-bda3-4ffa-86bb-8b89b58e7752",
+        "name": "Create Jira Ticket",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          736,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO remediation_tasks (finding_key, ticket_system, ticket_key, status, created_at, updated_at) VALUES ($1,'jira',$2,'open',now(),now()) RETURNING *;",
+          "options": {}
+        },
+        "id": "37f76ab4-d66a-477e-8959-80db1cc5fb9b",
+        "name": "Save Remediation Task",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          944,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE findings SET jira_issue_key=$2, updated_at=now() WHERE finding_key=$1 RETURNING *;",
+          "options": {}
+        },
+        "id": "5e0ded8f-19a5-4e50-9804-b85849303bd9",
+        "name": "Update Finding Ticket",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          1136,
+          96
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "ab9d624b-3068-4e40-bbad-492cd4a96034",
+        "name": "No Ticket Needed",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          336,
+          288
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "2361aecf-a2fa-4127-822f-4f7ce452c165",
+        "name": "End",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          1344,
+          96
+        ]
+      }
+    ],
+    "activeVersion": null,
+    "tags": [],
+    "meta": null,
+    "parentFolderId": null,
+    "scopes": [
+      "execution:reveal",
+      "workflow:create",
+      "workflow:delete",
+      "workflow:disableRedaction",
+      "workflow:enableRedaction",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:export",
+      "workflow:import",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:unshare",
+      "workflow:update"
+    ],
+    "canExecute": true
+  },
+  "triggerInfo": "This workflow has no production triggers (Schedule, Webhook, Form, or Chat). It can only be executed in manual mode."
+}

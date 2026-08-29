@@ -1,0 +1,407 @@
+{
+  "workflow": {
+    "id": "5HyaMQOH0CMlfQ0E",
+    "name": "07_aging_digest",
+    "active": false,
+    "isArchived": false,
+    "versionId": "40852307-2dcc-4558-ae73-533e0f59c175",
+    "activeVersionId": null,
+    "triggerCount": 0,
+    "createdAt": "2026-08-09T16:38:12.804Z",
+    "updatedAt": "2026-08-24T06:02:37.711Z",
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true,
+      "timeSavedMode": "fixed",
+      "callerPolicy": "workflowsFromSameOwner"
+    },
+    "connections": {
+      "Schedule": {
+        "main": [
+          [
+            {
+              "node": "Overdue",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Overdue": {
+        "main": [
+          [
+            {
+              "node": "Tag Overdue",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Missing Owners": {
+        "main": [
+          [
+            {
+              "node": "Tag Missing",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Repeated": {
+        "main": [
+          [
+            {
+              "node": "Tag Repeated",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Expiring": {
+        "main": [
+          [
+            {
+              "node": "Tag Expiring",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Tag Overdue": {
+        "main": [
+          [
+            {
+              "node": "Merge All",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Tag Missing": {
+        "main": [
+          [
+            {
+              "node": "Merge All",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Tag Repeated": {
+        "main": [
+          [
+            {
+              "node": "Merge All",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Tag Expiring": {
+        "main": [
+          [
+            {
+              "node": "Merge All",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Merge All": {
+        "main": [
+          [
+            {
+              "node": "Build Digest",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Digest": {
+        "main": [
+          [
+            {
+              "node": "Ollama Digest",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Ollama Digest": {
+        "main": [
+          [
+            {
+              "node": "Send Digest",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Send Digest": {
+        "main": [
+          [
+            {
+              "node": "End",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "weekday"
+              },
+              {
+                "field": "hour"
+              },
+              {
+                "field": "minute"
+              }
+            ]
+          }
+        },
+        "id": "f620cf04-398b-4ed9-8bd7-5b990864ba5d",
+        "name": "Schedule",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1,
+        "position": [
+          -576,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM findings WHERE status IN ('open','reopened') AND sla_due < now() ORDER BY sla_due ASC LIMIT 100;",
+          "options": {}
+        },
+        "id": "ce0bc432-8188-461b-a7cd-40fb581504e2",
+        "name": "Overdue",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -368,
+          -64
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const rows = $input.all();\nreturn rows.map(r => ({ json: { category: 'overdue', data: r.json } }));"
+        },
+        "id": "ed23b603-2651-43a4-8102-5bcb89f5d859",
+        "name": "Tag Overdue",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -176,
+          -64
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM findings WHERE missing_owner = true AND status IN ('open','reopened') ORDER BY last_seen DESC LIMIT 100;",
+          "options": {}
+        },
+        "id": "1a2311fe-164a-4b84-8c5f-6a9a4266f34e",
+        "name": "Missing Owners",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -368,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const rows = $input.all();\nreturn rows.map(r => ({ json: { category: 'missingOwners', data: r.json } }));"
+        },
+        "id": "d7439f4a-167a-44cf-b7f3-9cd24ed2595c",
+        "name": "Tag Missing",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -176,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM findings WHERE occurrence_count >= 3 AND status IN ('open','reopened') ORDER BY occurrence_count DESC LIMIT 100;",
+          "options": {}
+        },
+        "id": "757ae905-2844-439d-a541-e6b1f44cc815",
+        "name": "Repeated",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -368,
+          336
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const rows = $input.all();\nreturn rows.map(r => ({ json: { category: 'repeated', data: r.json } }));"
+        },
+        "id": "a53e5e5e-eaeb-40dd-bc2f-4eccc5f0e26b",
+        "name": "Tag Repeated",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -176,
+          336
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM exceptions WHERE status = 'active' AND expires_at <= now() + interval '5 days' ORDER BY expires_at ASC LIMIT 100;",
+          "options": {}
+        },
+        "id": "47c05b9b-ff6b-434d-977a-c82c7960d30f",
+        "name": "Expiring",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -368,
+          544
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const rows = $input.all();\nreturn rows.map(r => ({ json: { category: 'expiringExceptions', data: r.json } }));"
+        },
+        "id": "6eb1e37a-7098-4a35-8496-183464929386",
+        "name": "Tag Expiring",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -176,
+          544
+        ]
+      },
+      {
+        "parameters": {
+          "mode": "mergeByPosition",
+          "options": {}
+        },
+        "id": "6f19eee3-851b-43ae-9352-9e6c967bba43",
+        "name": "Merge All",
+        "type": "n8n-nodes-base.merge",
+        "typeVersion": 2,
+        "position": [
+          32,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const all = $input.all();\nconst digest = {\n  generatedAt: new Date().toISOString(),\n  overdue: all.filter(i => i.json.category === 'overdue').map(i => i.json.data),\n  missingOwners: all.filter(i => i.json.category === 'missingOwners').map(i => i.json.data),\n  repeated: all.filter(i => i.json.category === 'repeated').map(i => i.json.data),\n  expiringExceptions: all.filter(i => i.json.category === 'expiringExceptions').map(i => i.json.data)\n};\ndigest.overdueCount = digest.overdue.length;\ndigest.missingOwnerCount = digest.missingOwners.length;\ndigest.repeatedFailureCount = digest.repeated.length;\ndigest.expiringExceptionCount = digest.expiringExceptions.length;\n\nreturn [{ json: digest }];"
+        },
+        "id": "60490f6a-4da9-40f6-b5d2-a7b71c31cdb5",
+        "name": "Build Digest",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          240,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "workflowId": {
+            "value": "09_ollama_assistant",
+            "mode": "name"
+          },
+          "options": {}
+        },
+        "id": "dc021eb3-900c-42ad-8a4d-46d066a38fee",
+        "name": "Ollama Digest",
+        "type": "n8n-nodes-base.executeWorkflow",
+        "typeVersion": 1,
+        "position": [
+          432,
+          96
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.ALERT_WEBHOOK_URL || 'http://localhost:3000/alert' }}",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "id": "beed7d9b-d510-42cc-a17a-c1b7ee8afa8f",
+        "name": "Send Digest",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          640,
+          144
+        ]
+      },
+      {
+        "parameters": {},
+        "id": "84d43c33-2a03-4b39-b9b4-37dddfa8986f",
+        "name": "End",
+        "type": "n8n-nodes-base.noOp",
+        "typeVersion": 1,
+        "position": [
+          832,
+          144
+        ]
+      }
+    ],
+    "activeVersion": null,
+    "tags": [],
+    "meta": null,
+    "parentFolderId": null,
+    "scopes": [
+      "execution:reveal",
+      "workflow:create",
+      "workflow:delete",
+      "workflow:disableRedaction",
+      "workflow:enableRedaction",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:export",
+      "workflow:import",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:unshare",
+      "workflow:update"
+    ],
+    "canExecute": true
+  },
+  "triggerInfo": "This workflow has the following trigger(s):\n\n\nSchedule trigger(s):\n\n\n\t\t\t\t<trigger 1>\n\t\t\t\t\t - Node name: Schedule\n\t\t\t\t</trigger 1>\n\nScheduled workflows can be executed directly through MCP clients and do not require external inputs."
+}

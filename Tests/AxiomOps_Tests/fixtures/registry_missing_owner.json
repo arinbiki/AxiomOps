@@ -1,0 +1,31 @@
+{
+  "assets": [
+    {
+      "assetId": "asset-orphan",
+      "resourceId": "arn:aws:s3:::orphan-bucket",
+      "service": "aws",
+      "name": "orphan-bucket",
+      "environment": "production",
+      "criticality": "high",
+      "dataClassification": "pii",
+      "ownerEmail": "",
+      "team": "",
+      "escalationEmail": "",
+      "tags": []
+    }
+  ],
+  "controls": [
+    {
+      "controlId": "CC6.6",
+      "framework": "SOC2",
+      "description": "Encryption at rest",
+      "defaultOwnerEmail": "",
+      "defaultSlaHours": {
+        "critical": 72,
+        "high": 168,
+        "medium": 720,
+        "low": 2160
+      }
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "workflow": {
+    "id": "yKnks9Vv2DiOA3I9",
+    "name": "03_owner_resolver",
+    "active": false,
+    "isArchived": false,
+    "versionId": "cb49f442-6c64-49da-abaf-430f1f318cdf",
+    "activeVersionId": null,
+    "triggerCount": 0,
+    "createdAt": "2026-08-09T16:35:53.584Z",
+    "updatedAt": "2026-08-24T05:55:46.410Z",
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true,
+      "timeSavedMode": "fixed",
+      "callerPolicy": "workflowsFromSameOwner"
+    },
+    "connections": {
+      "Execute Trigger": {
+        "main": [
+          [
+            {
+              "node": "Fetch Finding",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Finding": {
+        "main": [
+          [
+            {
+              "node": "Fetch Asset",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Asset": {
+        "main": [
+          [
+            {
+              "node": "Resolve Owner",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Control": {
+        "main": [
+          [
+            {
+              "node": "Resolve Owner",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Resolve Owner": {
+        "main": [
+          [
+            {
+              "node": "Update Finding Owner",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Finding Owner": {
+        "main": [
+          [
+            {
+              "node": "Return Result",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "ee31951c-d756-459b-8225-d5bc10aa890f",
+        "name": "Execute Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          -544,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM findings WHERE finding_key = $1 LIMIT 1;",
+          "options": {}
+        },
+        "id": "493b2cab-3155-4479-ba6c-8bf899c2824c",
+        "name": "Fetch Finding",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -352,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM assets WHERE resource_id = $1 AND service = $2 LIMIT 1;",
+          "options": {}
+        },
+        "id": "7487059a-ed1d-4bcb-8f36-0cdd462445d4",
+        "name": "Fetch Asset",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -144,
+          32
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM controls WHERE control_id = $1 AND framework = $2 LIMIT 1;",
+          "options": {}
+        },
+        "id": "2b17b139-8391-4f4f-a950-8a5c85547390",
+        "name": "Fetch Control",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -144,
+          240
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const finding = $input.all().find(i => i.json.finding_key)?.json || {};\nconst asset = $input.all().find(i => i.json.asset_id)?.json || null;\nconst control = $input.all().find(i => i.json.control_id && i.json.framework)?.json || null;\n\nlet ownerEmail = null, ownerStatus = 'unresolved', team = null, escalationEmail = null, missingOwner = false;\n\nif (asset?.owner_email) {\n  ownerEmail = asset.owner_email; team = asset.team || null; escalationEmail = asset.escalation_email || null;\n  ownerStatus = 'resolved_asset_owner';\n} else if (control?.default_owner_email) {\n  ownerEmail = control.default_owner_email; ownerStatus = 'resolved_control_default';\n} else {\n  ownerEmail = $env.COMPLIANCE_ADMIN_EMAIL || 'compliance-admin@example.com';\n  escalationEmail = $env.COMPLIANCE_ESCALATION_EMAIL || 'ciso@example.com';\n  ownerStatus = 'missing_owner_fallback'; missingOwner = true;\n}\n\nreturn [{\n  json: {\n    findingKey: finding.finding_key, assetId: asset?.asset_id || null,\n    ownerEmail, ownerStatus, team, escalationEmail, missingOwner\n  }\n}];"
+        },
+        "id": "1d7a7eec-0729-4b93-bd93-912453813764",
+        "name": "Resolve Owner",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          64,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE findings SET asset_id=$2, owner_email=$3, owner_status=$4, team=$5, escalation_email=$6, missing_owner=$7, updated_at=now()\nWHERE finding_key=$1 RETURNING *;",
+          "options": {}
+        },
+        "id": "cb87d15c-fe27-42b1-b8a2-2ca8ddb9bb81",
+        "name": "Update Finding Owner",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          256,
+          144
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    findingKey: $input.first().json.finding_key,\n    ownerEmail: $input.first().json.owner_email,\n    ownerStatus: $input.first().json.owner_status,\n    resolved: true\n  }\n}];"
+        },
+        "id": "357d399e-31b9-47e4-b7ea-b2e2d6f2582c",
+        "name": "Return Result",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          464,
+          144
+        ]
+      }
+    ],
+    "activeVersion": null,
+    "tags": [],
+    "meta": null,
+    "parentFolderId": null,
+    "scopes": [
+      "execution:reveal",
+      "workflow:create",
+      "workflow:delete",
+      "workflow:disableRedaction",
+      "workflow:enableRedaction",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:export",
+      "workflow:import",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:unshare",
+      "workflow:update"
+    ],
+    "canExecute": true
+  },
+  "triggerInfo": "This workflow has no production triggers (Schedule, Webhook, Form, or Chat). It can only be executed in manual mode."
+}

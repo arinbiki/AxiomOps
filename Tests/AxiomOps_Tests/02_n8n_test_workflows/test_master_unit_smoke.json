@@ -1,0 +1,1672 @@
+{
+  "name": "TEST_master_unit_smoke",
+  "id": "0a788a7a-1009-4f4d-85d0-640b3e2fda70",
+  "nodes": [
+    {
+      "id": "8ce29b21-f107-4594-9e21-764935a197ef",
+      "name": "Start Test",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        250,
+        600
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "14120f58-3528-4d27-961c-8dfbd30b4528",
+      "name": "0_Cleanup",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        450,
+        600
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM audit_log WHERE created_at > now() - interval '2 hours';\nDELETE FROM remediation_tasks WHERE created_at > now() - interval '2 hours';\nDELETE FROM exceptions WHERE created_at > now() - interval '2 hours';\nDELETE FROM evidence_events WHERE run_id LIKE 'RUN-TEST-%' OR run_id LIKE 'RUN-STRESS-%' OR collected_at > now() - interval '2 hours';\nDELETE FROM findings WHERE finding_key LIKE '%TEST%' OR finding_key LIKE '%stress%' OR first_seen > now() - interval '2 hours';\nDELETE FROM assets WHERE asset_id LIKE 'asset-00%' OR updated_at > now() - interval '2 hours';\nDELETE FROM controls WHERE control_id IN ('CC6.6','CC7.1','HIPAA-164.312') OR updated_at > now() - interval '2 hours';",
+        "options": {
+          "nodeVersion": "2.1"
+        }
+      }
+    },
+    {
+      "id": "589e3541-025b-45b6-a02b-cef6324ebd84",
+      "name": "1_Call_Registry",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        650,
+        600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/complianceops-registry-sync",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ assets: [{ assetId: 'asset-001', resourceId: 'arn:aws:s3:::prod-data-lake', service: 'aws', name: 'prod-data-lake', environment: 'production', criticality: 'high', dataClassification: 'pii', ownerEmail: 'data-platform@example.com', team: 'Data Platform', escalationEmail: 'ciso@example.com', tags: ['soc2'] }, { assetId: 'asset-002', resourceId: 'arn:aws:ec2:::i-123456', service: 'aws', name: 'web-server-01', environment: 'staging', criticality: 'medium', dataClassification: 'internal', ownerEmail: 'devops@example.com', team: 'DevOps', escalationEmail: 'sre@example.com', tags: ['soc2'] }], controls: [{ controlId: 'CC6.6', framework: 'SOC2', description: 'Encryption at rest', defaultOwnerEmail: 'security-engineering@example.com', defaultSlaHours: { critical: 72, high: 168, medium: 720, low: 2160 } }, { controlId: 'CC7.1', framework: 'SOC2', description: 'Access logging', defaultOwnerEmail: 'security-engineering@example.com', defaultSlaHours: { critical: 24, high: 72, medium: 336, low: 720 } }] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "344a4a43-b6e1-47a3-a6a6-f2ddb459c04e",
+      "name": "1_Assert_Asset",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        850,
+        600
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT COUNT(*) as cnt FROM assets WHERE resource_id = 'arn:aws:s3:::prod-data-lake' AND service = 'aws';",
+        "options": {
+          "nodeVersion": "2.1"
+        }
+      }
+    },
+    {
+      "id": "b3bf087d-e7f5-48b1-8839-ee98e7dfdc0f",
+      "name": "1_Asset_OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1050,
+        600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "442c6ef3-36f0-4ea6-8494-5c2c2449cc8b",
+              "leftValue": "={{ parseInt($json.cnt) }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "eq"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "ac32d6ec-9464-4a7d-b8ef-dc921f791637",
+      "name": "1_PASS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        500
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_01_registry",
+              "type": "string",
+              "value": "PASS"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "c7021fe7-2caa-4629-8cff-8a685a2d35a1",
+      "name": "1_FAIL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        700
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_01_registry",
+              "type": "string",
+              "value": "FAIL"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "59c455a3-2d06-4ec0-aeb9-220568a9c8dd",
+      "name": "2_Call_Fail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1450,
+        600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/complianceops-finding-ingestion",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COMPLIANCEOPS-TOKEN",
+              "value": "change-me"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ source: 'ComplianceGuardPro', runId: 'RUN-TEST-001', framework: 'SOC2', timestamp: '2026-08-24T10:00:00Z', evidence: [{ controlId: 'CC6.6', resourceId: 'arn:aws:s3:::prod-data-lake', resourceName: 'prod-data-lake', service: 'aws', passed: false, severity: 'high', evidencePath: 'test/evidence.json', rawData: { encrypted: false } }] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "56c0c170-49d1-4486-944e-0dec7e1ab76b",
+      "name": "2_Assert_Finding",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        1650,
+        600
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT status, severity, occurrence_count, owner_email, owner_status, missing_owner, risk_score, priority, exception_active FROM findings WHERE finding_key = 'CC6.6::arn:aws:s3:::prod-data-lake::SOC2';",
+        "options": {
+          "nodeVersion": "2.1"
+        }
+      }
+    },
+    {
+      "id": "65fa3805-c588-4bf3-bf9e-fa5536e08a50",
+      "name": "2_Finding_OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1850,
+        600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "48e4709e-5640-4156-a34f-937b6c8f6727",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "open",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "5399fdb9-6a56-4423-9355-ab5a66a7636d",
+              "leftValue": "={{ $json.severity }}",
+              "rightValue": "high",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "55f27d93-d1a1-4ab0-a723-8ee60711aa13",
+              "leftValue": "={{ parseInt($json.occurrence_count) }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "eq"
+              }
+            },
+            {
+              "id": "8a19bb9b-a341-4c85-8c55-d42e0bfd399f",
+              "leftValue": "={{ $json.missing_owner }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "a6e8641e-b6a7-4adb-b828-01a45421f3ae",
+              "leftValue": "={{ $json.exception_active }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "67d993cb-ce36-4e94-b872-648d2ae45d27",
+      "name": "2_PASS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        2050,
+        500
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_02_ingestion_fail",
+              "type": "string",
+              "value": "PASS"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "13a51df2-fb87-4d54-a035-9d311bec7173",
+      "name": "2_FAIL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        2050,
+        700
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_02_ingestion_fail",
+              "type": "string",
+              "value": "FAIL"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "43eb6eb3-1b91-4091-9d36-c54dc42b33db",
+      "name": "3_Call_Dup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2250,
+        600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/complianceops-finding-ingestion",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COMPLIANCEOPS-TOKEN",
+              "value": "change-me"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ source: 'ComplianceGuardPro', runId: 'RUN-TEST-002', framework: 'SOC2', timestamp: '2026-08-24T11:00:00Z', evidence: [{ controlId: 'CC6.6', resourceId: 'arn:aws:s3:::prod-data-lake', resourceName: 'prod-data-lake', service: 'aws', passed: false, severity: 'high', evidencePath: 'test/evidence2.json', rawData: { encrypted: false } }] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "dd704d30-8170-4c08-87e5-d0bd2cac44d7",
+      "name": "3_Assert_Count",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        2450,
+        600
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT occurrence_count, status FROM findings WHERE finding_key = 'CC6.6::arn:aws:s3:::prod-data-lake::SOC2';",
+        "options": {
+          "nodeVersion": "2.1"
+        }
+      }
+    },
+    {
+      "id": "b8b24c99-6348-413c-9729-3794b80ee5e0",
+      "name": "3_Count_OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2650,
+        600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "937fe25b-bc0c-40f8-9407-21ef3f6c7668",
+              "leftValue": "={{ parseInt($json.occurrence_count) }}",
+              "rightValue": 2,
+              "operator": {
+                "type": "number",
+                "operation": "eq"
+              }
+            },
+            {
+              "id": "dc9a57be-5cac-4a0c-8375-de9cb29dd8f6",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "open",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "d0da27ae-c7ce-4b3f-b6d8-5512ddad00ba",
+      "name": "3_PASS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        2850,
+        500
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_03_duplicate",
+              "type": "string",
+              "value": "PASS"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "63e3290f-4118-498d-ba3c-65313717a343",
+      "name": "3_FAIL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        2850,
+        700
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_03_duplicate",
+              "type": "string",
+              "value": "FAIL"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "0fcbb6b6-b468-4da8-abcd-420df4232455",
+      "name": "4_Call_Missing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3050,
+        600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/complianceops-finding-ingestion",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COMPLIANCEOPS-TOKEN",
+              "value": "change-me"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ source: 'ComplianceGuardPro', runId: 'RUN-TEST-003', framework: 'SOC2', timestamp: '2026-08-24T12:00:00Z', evidence: [{ controlId: 'CC7.1', resourceId: 'arn:aws:ec2:::orphan-instance', resourceName: 'orphan-instance', service: 'aws', passed: false, severity: 'medium', evidencePath: 'test/evidence3.json', rawData: { logging: false } }] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "3aaf12ed-dd16-46d4-8efc-376e9dcaf8ff",
+      "name": "4_Assert_Missing",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        3250,
+        600
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT missing_owner, owner_status, owner_email FROM findings WHERE finding_key = 'CC7.1::arn:aws:ec2:::orphan-instance::SOC2';",
+        "options": {
+          "nodeVersion": "2.1"
+        }
+      }
+    },
+    {
+      "id": "67c73562-4c85-4ba0-a8e7-b163c0def818",
+      "name": "4_Missing_OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3450,
+        600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "74aade30-87ea-4fbf-b38e-26e6dbea37af",
+              "leftValue": "={{ $json.missing_owner }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "76e64ef4-4c61-48fa-9fb7-795c9375da4a",
+              "leftValue": "={{ $json.owner_status }}",
+              "rightValue": "missing_owner_fallback",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "20d55f87-c594-4d35-b4ff-cab4c5b08270",
+      "name": "4_PASS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        3650,
+        500
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_04_missing_owner",
+              "type": "string",
+              "value": "PASS"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "5f71c1cf-6e04-4313-a73e-7e8f90a7fba1",
+      "name": "4_FAIL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        3650,
+        700
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_04_missing_owner",
+              "type": "string",
+              "value": "FAIL"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "dbd15def-d67e-42b6-a550-db7a5f770a33",
+      "name": "5_Call_Exception",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        3850,
+        600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/complianceops-exception-request",
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ findingKey: 'CC6.6::arn:aws:s3:::prod-data-lake::SOC2', reason: 'Waiting for KMS implementation', requestedBy: 'devops@example.com', expiresInDays: 14 }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "294d3cce-8b6a-4fa6-a76c-20bb0d1c15b5",
+      "name": "5_Assert_Pending",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        4050,
+        600
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT status, requested_by FROM exceptions WHERE finding_key = 'CC6.6::arn:aws:s3:::prod-data-lake::SOC2' ORDER BY created_at DESC LIMIT 1;",
+        "options": {
+          "nodeVersion": "2.1"
+        }
+      }
+    },
+    {
+      "id": "0a3398aa-0f66-4b43-af4a-19eda28204df",
+      "name": "5_Pending_OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4250,
+        600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "23671b16-3536-4cd8-9b71-ef41c46672b4",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "pending",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "36705896-cc30-415c-8b16-b73bf7409910",
+      "name": "5_PASS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        4450,
+        500
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_05_exception_request",
+              "type": "string",
+              "value": "PASS"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "447e6529-2779-410a-9e64-c4250551257c",
+      "name": "5_FAIL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        4450,
+        700
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_05_exception_request",
+              "type": "string",
+              "value": "FAIL"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "24dc847c-22e8-4028-a034-8c8976dd5459",
+      "name": "6_Get_ExceptionId",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        4650,
+        600
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT exception_id FROM exceptions WHERE finding_key = 'CC6.6::arn:aws:s3:::prod-data-lake::SOC2' AND status = 'pending' ORDER BY created_at DESC LIMIT 1;",
+        "options": {
+          "nodeVersion": "2.1"
+        }
+      }
+    },
+    {
+      "id": "f117ccc4-a058-4dd6-b75a-ec5b62e70e45",
+      "name": "6_Call_Approve",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        4850,
+        600
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ `http://localhost:5678/webhook/complianceops-exception-decision?exceptionId=${$json.exception_id}&decision=approve&approver=ciso@example.com` }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "b09c8c40-65fc-4082-ba73-5d3daf7cee16",
+      "name": "6_Assert_Active",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        5050,
+        600
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT e.status as exc_status, f.status as finding_status, f.exception_active FROM exceptions e JOIN findings f ON e.finding_key = f.finding_key WHERE e.finding_key = 'CC6.6::arn:aws:s3:::prod-data-lake::SOC2' AND e.status = 'active';",
+        "options": {
+          "nodeVersion": "2.1"
+        }
+      }
+    },
+    {
+      "id": "d7eef1bb-cbc5-49ce-ba65-31e7fd760742",
+      "name": "6_Active_OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        5250,
+        600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "6e1402c2-3e97-42a9-8f4b-1c09e47e4bef",
+              "leftValue": "={{ $json.exc_status }}",
+              "rightValue": "active",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "0db3ff4e-1ddd-43ae-be26-236f09516b88",
+              "leftValue": "={{ $json.finding_status }}",
+              "rightValue": "risk_accepted",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "3e112bf1-d0d2-4cc8-85bc-f8fd5484b22c",
+              "leftValue": "={{ $json.exception_active }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "44cb5083-17e1-43f2-8cc2-751aa51c3834",
+      "name": "6_PASS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        5450,
+        500
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_06_exception_approve",
+              "type": "string",
+              "value": "PASS"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "5f26c630-058e-4634-a83f-b6f907957219",
+      "name": "6_FAIL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        5450,
+        700
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_06_exception_approve",
+              "type": "string",
+              "value": "FAIL"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "8e1361f2-372b-436a-b312-f12d9eae0993",
+      "name": "7_Call_Pass",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        5650,
+        600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/complianceops-finding-ingestion",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COMPLIANCEOPS-TOKEN",
+              "value": "change-me"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ source: 'ComplianceGuardPro', runId: 'RUN-TEST-004', framework: 'SOC2', timestamp: '2026-08-24T13:00:00Z', evidence: [{ controlId: 'CC6.6', resourceId: 'arn:aws:s3:::prod-data-lake', resourceName: 'prod-data-lake', service: 'aws', passed: true, severity: 'none', evidencePath: 'test/evidence4.json', rawData: { encrypted: true } }] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "68f1ec53-bed1-4f98-8be8-757564c1a8fa",
+      "name": "7_Assert_Closed",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        5850,
+        600
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT status, closure_reason FROM findings WHERE finding_key = 'CC6.6::arn:aws:s3:::prod-data-lake::SOC2';",
+        "options": {
+          "nodeVersion": "2.1"
+        }
+      }
+    },
+    {
+      "id": "2af99b98-2651-455c-9e08-77183e11433b",
+      "name": "7_Closed_OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        6050,
+        600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "2997b7d4-45b7-4f0f-9d95-e2334280f3d9",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "closed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "9beb57ce-0622-49fc-b0e7-4c3a96895762",
+              "leftValue": "={{ $json.closure_reason }}",
+              "rightValue": "consecutive_evidence_passed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "aeb93340-e19d-498b-be63-87ea00aeda45",
+      "name": "7_PASS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        6250,
+        500
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_07_closure",
+              "type": "string",
+              "value": "PASS"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "4169a8da-cf98-45c3-95bb-8e4011c344c7",
+      "name": "7_FAIL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        6250,
+        700
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_07_closure",
+              "type": "string",
+              "value": "FAIL"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b73685f6-f4e7-48ae-85c4-2d8e2b9cef57",
+      "name": "8_Call_Critical",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        6450,
+        600
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/complianceops-finding-ingestion",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-COMPLIANCEOPS-TOKEN",
+              "value": "change-me"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify({ source: 'ComplianceGuardPro', runId: 'RUN-TEST-005', framework: 'HIPAA', timestamp: '2026-08-24T14:00:00Z', evidence: [{ controlId: 'HIPAA-164.312', resourceId: 'arn:aws:rds:::prod-db', resourceName: 'prod-db', service: 'aws', passed: false, severity: 'critical', evidencePath: 'test/evidence5.json', rawData: { auditEnabled: false } }] }) }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "978c8caf-a3a2-4825-8260-c6ec77617907",
+      "name": "8_Assert_Risk",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.1,
+      "position": [
+        6650,
+        600
+      ],
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT priority, risk_score, sla_due FROM findings WHERE finding_key = 'HIPAA-164.312::arn:aws:rds:::prod-db::HIPAA';",
+        "options": {
+          "nodeVersion": "2.1"
+        }
+      }
+    },
+    {
+      "id": "f575ab4f-f60e-484e-a031-43aaec992620",
+      "name": "8_Risk_OK?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        6850,
+        600
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "322c3e0d-7493-48a4-b0de-1dff2025d899",
+              "leftValue": "={{ $json.priority }}",
+              "rightValue": "P1",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "d6cb4e9d-9260-487e-ae5c-901a6a42c54f",
+              "leftValue": "={{ parseInt($json.risk_score) }}",
+              "rightValue": 85,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "814d15b9-8f03-4c22-93f1-3780e3541cb3",
+      "name": "8_PASS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        7050,
+        500
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_08_critical_risk",
+              "type": "string",
+              "value": "PASS"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "6ddba9e8-5f86-4324-9a47-d025bcf547d8",
+      "name": "8_FAIL",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        7050,
+        700
+      ],
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "test_08_critical_risk",
+              "type": "string",
+              "value": "FAIL"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "ea855992-43ea-47d9-adaa-ed39e16f3e4d",
+      "name": "Collect_Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        7250,
+        600
+      ],
+      "parameters": {
+        "mode": "mergeByPosition",
+        "options": {}
+      }
+    },
+    {
+      "id": "dadf336e-dc01-49b5-ac4b-762513b375bf",
+      "name": "Build_Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        7450,
+        600
+      ],
+      "parameters": {
+        "jsCode": "const all = $input.all();\nconst report = {\n  suite: 'AxiomOps',\n  timestamp: new Date().toISOString(),\n  totalTests: 8,\n  results: {}\n};\nfor (const item of all) {\n  for (const [key, val] of Object.entries(item.json)) {\n    if (key.startsWith('test_')) report.results[key] = val;\n  }\n}\nreport.passed = Object.values(report.results).filter(v => v === 'PASS').length;\nreport.failed = Object.values(report.results).filter(v => v === 'FAIL').length;\nreport.status = report.failed === 0 ? 'ALL_PASS' : 'HAS_FAILURES';\nreturn [{ json: report }];"
+      }
+    },
+    {
+      "id": "5ae438a5-a3d0-4368-92f3-db53634102ed",
+      "name": "Report_Output",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        7650,
+        600
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Start Test": {
+      "main": [
+        [
+          {
+            "node": "0_Cleanup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "0_Cleanup": {
+      "main": [
+        [
+          {
+            "node": "1_Call_Registry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1_Call_Registry": {
+      "main": [
+        [
+          {
+            "node": "1_Assert_Asset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1_Assert_Asset": {
+      "main": [
+        [
+          {
+            "node": "1_Asset_OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1_Asset_OK?": {
+      "main": [
+        [
+          {
+            "node": "1_PASS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "1_FAIL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1_PASS": {
+      "main": [
+        [
+          {
+            "node": "2_Call_Fail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1_FAIL": {
+      "main": [
+        [
+          {
+            "node": "2_Call_Fail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2_Call_Fail": {
+      "main": [
+        [
+          {
+            "node": "2_Assert_Finding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2_Assert_Finding": {
+      "main": [
+        [
+          {
+            "node": "2_Finding_OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2_Finding_OK?": {
+      "main": [
+        [
+          {
+            "node": "2_PASS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "2_FAIL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2_PASS": {
+      "main": [
+        [
+          {
+            "node": "3_Call_Dup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2_FAIL": {
+      "main": [
+        [
+          {
+            "node": "3_Call_Dup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3_Call_Dup": {
+      "main": [
+        [
+          {
+            "node": "3_Assert_Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3_Assert_Count": {
+      "main": [
+        [
+          {
+            "node": "3_Count_OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3_Count_OK?": {
+      "main": [
+        [
+          {
+            "node": "3_PASS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "3_FAIL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3_PASS": {
+      "main": [
+        [
+          {
+            "node": "4_Call_Missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3_FAIL": {
+      "main": [
+        [
+          {
+            "node": "4_Call_Missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4_Call_Missing": {
+      "main": [
+        [
+          {
+            "node": "4_Assert_Missing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4_Assert_Missing": {
+      "main": [
+        [
+          {
+            "node": "4_Missing_OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4_Missing_OK?": {
+      "main": [
+        [
+          {
+            "node": "4_PASS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "4_FAIL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4_PASS": {
+      "main": [
+        [
+          {
+            "node": "5_Call_Exception",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4_FAIL": {
+      "main": [
+        [
+          {
+            "node": "5_Call_Exception",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5_Call_Exception": {
+      "main": [
+        [
+          {
+            "node": "5_Assert_Pending",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5_Assert_Pending": {
+      "main": [
+        [
+          {
+            "node": "5_Pending_OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5_Pending_OK?": {
+      "main": [
+        [
+          {
+            "node": "5_PASS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "5_FAIL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5_PASS": {
+      "main": [
+        [
+          {
+            "node": "6_Get_ExceptionId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "5_FAIL": {
+      "main": [
+        [
+          {
+            "node": "6_Get_ExceptionId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6_Get_ExceptionId": {
+      "main": [
+        [
+          {
+            "node": "6_Call_Approve",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6_Call_Approve": {
+      "main": [
+        [
+          {
+            "node": "6_Assert_Active",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6_Assert_Active": {
+      "main": [
+        [
+          {
+            "node": "6_Active_OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6_Active_OK?": {
+      "main": [
+        [
+          {
+            "node": "6_PASS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "6_FAIL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6_PASS": {
+      "main": [
+        [
+          {
+            "node": "7_Call_Pass",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6_FAIL": {
+      "main": [
+        [
+          {
+            "node": "7_Call_Pass",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7_Call_Pass": {
+      "main": [
+        [
+          {
+            "node": "7_Assert_Closed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7_Assert_Closed": {
+      "main": [
+        [
+          {
+            "node": "7_Closed_OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7_Closed_OK?": {
+      "main": [
+        [
+          {
+            "node": "7_PASS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "7_FAIL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7_PASS": {
+      "main": [
+        [
+          {
+            "node": "8_Call_Critical",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "7_FAIL": {
+      "main": [
+        [
+          {
+            "node": "8_Call_Critical",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8_Call_Critical": {
+      "main": [
+        [
+          {
+            "node": "8_Assert_Risk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8_Assert_Risk": {
+      "main": [
+        [
+          {
+            "node": "8_Risk_OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8_Risk_OK?": {
+      "main": [
+        [
+          {
+            "node": "8_PASS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "8_FAIL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8_PASS": {
+      "main": [
+        [
+          {
+            "node": "Collect_Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "8_FAIL": {
+      "main": [
+        [
+          {
+            "node": "Collect_Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Collect_Results": {
+      "main": [
+        [
+          {
+            "node": "Build_Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build_Report": {
+      "main": [
+        [
+          {
+            "node": "Report_Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": [
+    "axiomops",
+    "test"
+  ],
+  "staticData": null,
+  "pinData": {}
+}

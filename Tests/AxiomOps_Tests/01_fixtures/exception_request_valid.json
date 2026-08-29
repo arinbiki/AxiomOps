@@ -1,0 +1,6 @@
+{
+  "findingKey": "CC6.6::arn:aws:s3:::prod-data-lake::SOC2",
+  "reason": "Waiting for KMS implementation",
+  "requestedBy": "devops@example.com",
+  "expiresInDays": 14
+}

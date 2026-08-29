@@ -1,0 +1,227 @@
+{
+  "workflow": {
+    "id": "6sP2FqEQKEZmV49S",
+    "name": "06_exception_request",
+    "active": false,
+    "isArchived": false,
+    "versionId": "8c30a61b-e130-4086-875a-7f2692462199",
+    "activeVersionId": null,
+    "triggerCount": 0,
+    "createdAt": "2026-08-09T16:37:01.949Z",
+    "updatedAt": "2026-08-24T05:57:57.902Z",
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true,
+      "timeSavedMode": "fixed",
+      "callerPolicy": "workflowsFromSameOwner"
+    },
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Validate Request",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Validate Request": {
+        "main": [
+          [
+            {
+              "node": "Fetch Finding",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Finding": {
+        "main": [
+          [
+            {
+              "node": "Insert Exception",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Insert Exception": {
+        "main": [
+          [
+            {
+              "node": "Build Links",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Build Links": {
+        "main": [
+          [
+            {
+              "node": "Notify",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Notify": {
+        "main": [
+          [
+            {
+              "node": "Respond",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "parameters": {
+          "path": "complianceops-exception-request",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "id": "a5195a00-3c8d-42cf-aba1-b8a1d16c1dfb",
+        "name": "Webhook",
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 1,
+        "position": [
+          -528,
+          -64
+        ],
+        "webhookId": "f32cc72a-ac5a-44ec-9430-89bd6c6de979"
+      },
+      {
+        "parameters": {
+          "jsCode": "const body = $input.first().json.body || $input.first().json;\nif (!body.findingKey || !body.reason || !body.requestedBy) throw new Error('findingKey, reason, requestedBy required');\nconst expiresInDays = body.expiresInDays || 14;\nconst exceptionId = `EXC-${Date.now()}`;\nreturn [{ json: { exceptionId, findingKey: body.findingKey, reason: body.reason, requestedBy: body.requestedBy, expiresInDays, status: 'pending' } }];"
+        },
+        "id": "93cd5ce8-4c13-4d97-b475-cd35d086ca81",
+        "name": "Validate Request",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -336,
+          -64
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM findings WHERE finding_key = $1 LIMIT 1;",
+          "options": {}
+        },
+        "id": "d39bc0d6-7749-43a6-9179-0c8f396382f0",
+        "name": "Fetch Finding",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -128,
+          -64
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "INSERT INTO exceptions (exception_id, finding_key, reason, requested_by, status, created_at, updated_at) VALUES ($1,$2,$3,$4,'pending',now(),now()) RETURNING *;",
+          "options": {}
+        },
+        "id": "d54c7633-b757-4dc1-9928-8112d2d1554d",
+        "name": "Insert Exception",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          80,
+          -64
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const base = $env.PUBLIC_WEBHOOK_URL || 'http://localhost:5678';\nconst e = $input.first().json;\nconst approveUrl = `${base}/webhook/complianceops-exception-decision?exceptionId=${e.exceptionId}&decision=approve`;\nconst rejectUrl = `${base}/webhook/complianceops-exception-decision?exceptionId=${e.exceptionId}&decision=reject`;\nreturn [{ json: { ...e, approveUrl, rejectUrl } }];"
+        },
+        "id": "b10e0965-5589-467a-abbe-405234aea692",
+        "name": "Build Links",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          272,
+          -64
+        ]
+      },
+      {
+        "parameters": {
+          "method": "POST",
+          "url": "={{ $env.ALERT_WEBHOOK_URL || 'http://localhost:3000/alert' }}",
+          "sendBody": true,
+          "bodyParameters": {
+            "parameters": [
+              {}
+            ]
+          },
+          "options": {
+            "timeout": 30000
+          }
+        },
+        "id": "6a575206-bd2d-4a83-8aad-0ddb7fc6e36d",
+        "name": "Notify",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [
+          480,
+          -64
+        ]
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ status: 'pending', exceptionId: $json.exceptionId, approveUrl: $json.approveUrl, rejectUrl: $json.rejectUrl }) }}",
+          "options": {
+            "responseCode": 200
+          }
+        },
+        "id": "875c5558-7a38-4883-9aa3-e3b114103ab3",
+        "name": "Respond",
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1,
+        "position": [
+          672,
+          -64
+        ]
+      }
+    ],
+    "activeVersion": null,
+    "tags": [],
+    "meta": null,
+    "parentFolderId": null,
+    "scopes": [
+      "execution:reveal",
+      "workflow:create",
+      "workflow:delete",
+      "workflow:disableRedaction",
+      "workflow:enableRedaction",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:export",
+      "workflow:import",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:unshare",
+      "workflow:update"
+    ],
+    "canExecute": true
+  },
+  "triggerInfo": "This workflow has the following trigger(s):\n\n\nWebhook trigger(s):\n\n\n\t\t\t\t<trigger 1>\n\t\t\t\t\t - Node name: Webhook\n\t\t\t\t\t - Base URL: https://ubuntu.arindam818.cloud/\n\t\t\t\t\t - Production path: /webhook/complianceops-exception-request\n\t\t\t\t\t - Test path: /webhook-test/complianceops-exception-request\n\t\t\t\t\t - HTTP Method: GET\n\t\t\t\t\t - Response Mode: Webhook is configured to respond using \"Respond to Webhook\" node.\n\t\t\t\t\t - No credentials required for this webhook.\n\t\t\t\t</trigger 1>"
+}

@@ -1,0 +1,20 @@
+{
+  "source": "ComplianceGuardPro",
+  "runId": "RUN-TEST-001",
+  "framework": "SOC2",
+  "timestamp": "2026-08-24T10:00:00Z",
+  "evidence": [
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::prod-data-lake",
+      "resourceName": "prod-data-lake",
+      "service": "aws",
+      "passed": false,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/soc2/run-test-001/cc66.json",
+      "rawData": {
+        "encrypted": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "workflow": {
+    "id": "rBO4UuJSbOiSm08Y",
+    "name": "04_risk_prioritizer",
+    "active": false,
+    "isArchived": false,
+    "versionId": "9a897995-fe1c-49b3-9816-678ded5b60f7",
+    "activeVersionId": null,
+    "triggerCount": 0,
+    "createdAt": "2026-08-09T16:36:17.654Z",
+    "updatedAt": "2026-08-24T05:56:55.554Z",
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": true,
+      "timeSavedMode": "fixed",
+      "callerPolicy": "workflowsFromSameOwner"
+    },
+    "connections": {
+      "Execute Trigger": {
+        "main": [
+          [
+            {
+              "node": "Fetch Finding Full",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Finding Full": {
+        "main": [
+          [
+            {
+              "node": "Fetch Asset Risk",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Asset Risk": {
+        "main": [
+          [
+            {
+              "node": "Calculate Risk",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Control SLA": {
+        "main": [
+          [
+            {
+              "node": "Calculate Risk",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Calculate Risk": {
+        "main": [
+          [
+            {
+              "node": "Update Risk",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Update Risk": {
+        "main": [
+          [
+            {
+              "node": "Return Risk",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodes": [
+      {
+        "parameters": {},
+        "id": "b92c6364-823f-48ad-abd3-51f2544a7b4c",
+        "name": "Execute Trigger",
+        "type": "n8n-nodes-base.executeWorkflowTrigger",
+        "typeVersion": 1,
+        "position": [
+          -400,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM findings WHERE finding_key = $1 LIMIT 1;",
+          "options": {}
+        },
+        "id": "92c366ff-206d-4df8-9172-e18916cdac9c",
+        "name": "Fetch Finding Full",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          -208,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM assets WHERE resource_id = $1 AND service = $2 LIMIT 1;",
+          "options": {}
+        },
+        "id": "62333e60-5bb3-4af7-adcc-b02b8ed3d4e5",
+        "name": "Fetch Asset Risk",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          0,
+          0
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "SELECT * FROM controls WHERE control_id = $1 AND framework = $2 LIMIT 1;",
+          "options": {}
+        },
+        "id": "017cc8a0-e453-4e1e-a571-648481547a74",
+        "name": "Fetch Control SLA",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          0,
+          208
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "const finding = $input.all().find(i => i.json.finding_key)?.json || {};\nconst asset = $input.all().find(i => i.json.asset_id)?.json || {};\nconst control = $input.all().find(i => i.json.control_id && i.json.framework)?.json || {};\n\nconst sevBase = {critical:90, high:70, medium:45, low:20};\nconst critAdd = {critical:10, high:7, medium:4, low:1};\nconst envAdd = {production:8, staging:3, dev:0};\n\nlet score = sevBase[finding.severity] ?? 40;\nscore += critAdd[asset.criticality] ?? 3;\nscore += envAdd[asset.environment] ?? 0;\nif (finding.occurrence_count >= 3) score += 8;\nif (['HIPAA','PCI-DSS','FedRAMP'].includes(finding.framework)) score += 8;\nif (['pii','phi','pci'].includes(asset.data_classification)) score += 10;\nscore = Math.min(100, score);\n\nlet priority = 'P4';\nif (score >= 85) priority = 'P1';\nelse if (score >= 70) priority = 'P2';\nelse if (score >= 50) priority = 'P3';\n\nconst controlSla = control.default_sla_hours || {};\nlet slaHours = controlSla[finding.severity];\nif (!slaHours) {\n  if (finding.severity === 'critical' && asset.environment === 'production') slaHours = 24;\n  else if (finding.severity === 'critical') slaHours = 72;\n  else if (finding.severity === 'high' && asset.environment === 'production') slaHours = 168;\n  else if (finding.severity === 'high') slaHours = 336;\n  else if (finding.severity === 'medium') slaHours = 720;\n  else slaHours = 2160;\n}\nif (finding.occurrence_count >= 3) slaHours = Math.round(slaHours * 0.75);\nconst slaDue = new Date(Date.now() + slaHours * 3600 * 1000).toISOString();\n\nreturn [{\n  json: {\n    findingKey: finding.finding_key, riskScore: score, priority, slaDue,\n    repeatedFailure: finding.occurrence_count >= 3\n  }\n}];"
+        },
+        "id": "75bbc727-1ab2-45ea-80cc-b9afee870bdb",
+        "name": "Calculate Risk",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          208,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "operation": "executeQuery",
+          "query": "UPDATE findings SET risk_score=$2, priority=$3, sla_due=$4, repeated_failure=$5, updated_at=now()\nWHERE finding_key=$1 RETURNING *;",
+          "options": {}
+        },
+        "id": "e89c3df3-ca5b-4258-b90f-0385b9bfd53e",
+        "name": "Update Risk",
+        "type": "n8n-nodes-base.postgres",
+        "typeVersion": 2.1,
+        "position": [
+          400,
+          112
+        ]
+      },
+      {
+        "parameters": {
+          "jsCode": "return [{\n  json: {\n    findingKey: $input.first().json.finding_key,\n    riskScore: $input.first().json.risk_score,\n    priority: $input.first().json.priority,\n    slaDue: $input.first().json.sla_due\n  }\n}];"
+        },
+        "id": "f2f72ffe-9a3a-4e92-bf91-edef88ca5f46",
+        "name": "Return Risk",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          608,
+          112
+        ]
+      }
+    ],
+    "activeVersion": null,
+    "tags": [],
+    "meta": null,
+    "parentFolderId": null,
+    "scopes": [
+      "execution:reveal",
+      "workflow:create",
+      "workflow:delete",
+      "workflow:disableRedaction",
+      "workflow:enableRedaction",
+      "workflow:execute",
+      "workflow:execute-chat",
+      "workflow:export",
+      "workflow:import",
+      "workflow:list",
+      "workflow:move",
+      "workflow:publish",
+      "workflow:read",
+      "workflow:share",
+      "workflow:unpublish",
+      "workflow:unshare",
+      "workflow:update"
+    ],
+    "canExecute": true
+  },
+  "triggerInfo": "This workflow has no production triggers (Schedule, Webhook, Form, or Chat). It can only be executed in manual mode."
+}

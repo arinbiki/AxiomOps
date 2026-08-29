@@ -1,0 +1,1308 @@
+{
+  "source": "ComplianceGuardPro",
+  "runId": "RUN-STRESS-100",
+  "framework": "SOC2",
+  "timestamp": "2026-08-24T15:00:00Z",
+  "evidence": [
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0000",
+      "resourceName": "bucket-0000",
+      "service": "aws",
+      "passed": false,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-0.json",
+      "rawData": {
+        "test": true,
+        "index": 0
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0001",
+      "resourceName": "bucket-0001",
+      "service": "azure",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-1.json",
+      "rawData": {
+        "test": true,
+        "index": 1
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0002",
+      "resourceName": "bucket-0002",
+      "service": "gcp",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-2.json",
+      "rawData": {
+        "test": true,
+        "index": 2
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0003",
+      "resourceName": "bucket-0003",
+      "service": "aws",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-3.json",
+      "rawData": {
+        "test": true,
+        "index": 3
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0004",
+      "resourceName": "bucket-0004",
+      "service": "azure",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-4.json",
+      "rawData": {
+        "test": true,
+        "index": 4
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0005",
+      "resourceName": "bucket-0005",
+      "service": "gcp",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-5.json",
+      "rawData": {
+        "test": true,
+        "index": 5
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0006",
+      "resourceName": "bucket-0006",
+      "service": "aws",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-6.json",
+      "rawData": {
+        "test": true,
+        "index": 6
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0007",
+      "resourceName": "bucket-0007",
+      "service": "azure",
+      "passed": false,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-7.json",
+      "rawData": {
+        "test": true,
+        "index": 7
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0008",
+      "resourceName": "bucket-0008",
+      "service": "gcp",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-8.json",
+      "rawData": {
+        "test": true,
+        "index": 8
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0009",
+      "resourceName": "bucket-0009",
+      "service": "aws",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-9.json",
+      "rawData": {
+        "test": true,
+        "index": 9
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0010",
+      "resourceName": "bucket-0010",
+      "service": "azure",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-10.json",
+      "rawData": {
+        "test": true,
+        "index": 10
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0011",
+      "resourceName": "bucket-0011",
+      "service": "gcp",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-11.json",
+      "rawData": {
+        "test": true,
+        "index": 11
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0012",
+      "resourceName": "bucket-0012",
+      "service": "aws",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-12.json",
+      "rawData": {
+        "test": true,
+        "index": 12
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0013",
+      "resourceName": "bucket-0013",
+      "service": "azure",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-13.json",
+      "rawData": {
+        "test": true,
+        "index": 13
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0014",
+      "resourceName": "bucket-0014",
+      "service": "gcp",
+      "passed": false,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-14.json",
+      "rawData": {
+        "test": true,
+        "index": 14
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0015",
+      "resourceName": "bucket-0015",
+      "service": "aws",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-15.json",
+      "rawData": {
+        "test": true,
+        "index": 15
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0016",
+      "resourceName": "bucket-0016",
+      "service": "azure",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-16.json",
+      "rawData": {
+        "test": true,
+        "index": 16
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0017",
+      "resourceName": "bucket-0017",
+      "service": "gcp",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-17.json",
+      "rawData": {
+        "test": true,
+        "index": 17
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0018",
+      "resourceName": "bucket-0018",
+      "service": "aws",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-18.json",
+      "rawData": {
+        "test": true,
+        "index": 18
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0019",
+      "resourceName": "bucket-0019",
+      "service": "azure",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-19.json",
+      "rawData": {
+        "test": true,
+        "index": 19
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0020",
+      "resourceName": "bucket-0020",
+      "service": "gcp",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-20.json",
+      "rawData": {
+        "test": true,
+        "index": 20
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0021",
+      "resourceName": "bucket-0021",
+      "service": "aws",
+      "passed": false,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-21.json",
+      "rawData": {
+        "test": true,
+        "index": 21
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0022",
+      "resourceName": "bucket-0022",
+      "service": "azure",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-22.json",
+      "rawData": {
+        "test": true,
+        "index": 22
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0023",
+      "resourceName": "bucket-0023",
+      "service": "gcp",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-23.json",
+      "rawData": {
+        "test": true,
+        "index": 23
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0024",
+      "resourceName": "bucket-0024",
+      "service": "aws",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-24.json",
+      "rawData": {
+        "test": true,
+        "index": 24
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0025",
+      "resourceName": "bucket-0025",
+      "service": "azure",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-25.json",
+      "rawData": {
+        "test": true,
+        "index": 25
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0026",
+      "resourceName": "bucket-0026",
+      "service": "gcp",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-26.json",
+      "rawData": {
+        "test": true,
+        "index": 26
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0027",
+      "resourceName": "bucket-0027",
+      "service": "aws",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-27.json",
+      "rawData": {
+        "test": true,
+        "index": 27
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0028",
+      "resourceName": "bucket-0028",
+      "service": "azure",
+      "passed": false,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-28.json",
+      "rawData": {
+        "test": true,
+        "index": 28
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0029",
+      "resourceName": "bucket-0029",
+      "service": "gcp",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-29.json",
+      "rawData": {
+        "test": true,
+        "index": 29
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0030",
+      "resourceName": "bucket-0030",
+      "service": "aws",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-30.json",
+      "rawData": {
+        "test": true,
+        "index": 30
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0031",
+      "resourceName": "bucket-0031",
+      "service": "azure",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-31.json",
+      "rawData": {
+        "test": true,
+        "index": 31
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0032",
+      "resourceName": "bucket-0032",
+      "service": "gcp",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-32.json",
+      "rawData": {
+        "test": true,
+        "index": 32
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0033",
+      "resourceName": "bucket-0033",
+      "service": "aws",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-33.json",
+      "rawData": {
+        "test": true,
+        "index": 33
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0034",
+      "resourceName": "bucket-0034",
+      "service": "azure",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-34.json",
+      "rawData": {
+        "test": true,
+        "index": 34
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0035",
+      "resourceName": "bucket-0035",
+      "service": "gcp",
+      "passed": false,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-35.json",
+      "rawData": {
+        "test": true,
+        "index": 35
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0036",
+      "resourceName": "bucket-0036",
+      "service": "aws",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-36.json",
+      "rawData": {
+        "test": true,
+        "index": 36
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0037",
+      "resourceName": "bucket-0037",
+      "service": "azure",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-37.json",
+      "rawData": {
+        "test": true,
+        "index": 37
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0038",
+      "resourceName": "bucket-0038",
+      "service": "gcp",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-38.json",
+      "rawData": {
+        "test": true,
+        "index": 38
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0039",
+      "resourceName": "bucket-0039",
+      "service": "aws",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-39.json",
+      "rawData": {
+        "test": true,
+        "index": 39
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0040",
+      "resourceName": "bucket-0040",
+      "service": "azure",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-40.json",
+      "rawData": {
+        "test": true,
+        "index": 40
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0041",
+      "resourceName": "bucket-0041",
+      "service": "gcp",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-41.json",
+      "rawData": {
+        "test": true,
+        "index": 41
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0042",
+      "resourceName": "bucket-0042",
+      "service": "aws",
+      "passed": false,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-42.json",
+      "rawData": {
+        "test": true,
+        "index": 42
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0043",
+      "resourceName": "bucket-0043",
+      "service": "azure",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-43.json",
+      "rawData": {
+        "test": true,
+        "index": 43
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0044",
+      "resourceName": "bucket-0044",
+      "service": "gcp",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-44.json",
+      "rawData": {
+        "test": true,
+        "index": 44
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0045",
+      "resourceName": "bucket-0045",
+      "service": "aws",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-45.json",
+      "rawData": {
+        "test": true,
+        "index": 45
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0046",
+      "resourceName": "bucket-0046",
+      "service": "azure",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-46.json",
+      "rawData": {
+        "test": true,
+        "index": 46
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0047",
+      "resourceName": "bucket-0047",
+      "service": "gcp",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-47.json",
+      "rawData": {
+        "test": true,
+        "index": 47
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0048",
+      "resourceName": "bucket-0048",
+      "service": "aws",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-48.json",
+      "rawData": {
+        "test": true,
+        "index": 48
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0049",
+      "resourceName": "bucket-0049",
+      "service": "azure",
+      "passed": false,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-49.json",
+      "rawData": {
+        "test": true,
+        "index": 49
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0050",
+      "resourceName": "bucket-0050",
+      "service": "gcp",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-50.json",
+      "rawData": {
+        "test": true,
+        "index": 50
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0051",
+      "resourceName": "bucket-0051",
+      "service": "aws",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-51.json",
+      "rawData": {
+        "test": true,
+        "index": 51
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0052",
+      "resourceName": "bucket-0052",
+      "service": "azure",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-52.json",
+      "rawData": {
+        "test": true,
+        "index": 52
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0053",
+      "resourceName": "bucket-0053",
+      "service": "gcp",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-53.json",
+      "rawData": {
+        "test": true,
+        "index": 53
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0054",
+      "resourceName": "bucket-0054",
+      "service": "aws",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-54.json",
+      "rawData": {
+        "test": true,
+        "index": 54
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0055",
+      "resourceName": "bucket-0055",
+      "service": "azure",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-55.json",
+      "rawData": {
+        "test": true,
+        "index": 55
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0056",
+      "resourceName": "bucket-0056",
+      "service": "gcp",
+      "passed": false,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-56.json",
+      "rawData": {
+        "test": true,
+        "index": 56
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0057",
+      "resourceName": "bucket-0057",
+      "service": "aws",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-57.json",
+      "rawData": {
+        "test": true,
+        "index": 57
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0058",
+      "resourceName": "bucket-0058",
+      "service": "azure",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-58.json",
+      "rawData": {
+        "test": true,
+        "index": 58
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0059",
+      "resourceName": "bucket-0059",
+      "service": "gcp",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-59.json",
+      "rawData": {
+        "test": true,
+        "index": 59
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0060",
+      "resourceName": "bucket-0060",
+      "service": "aws",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-60.json",
+      "rawData": {
+        "test": true,
+        "index": 60
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0061",
+      "resourceName": "bucket-0061",
+      "service": "azure",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-61.json",
+      "rawData": {
+        "test": true,
+        "index": 61
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0062",
+      "resourceName": "bucket-0062",
+      "service": "gcp",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-62.json",
+      "rawData": {
+        "test": true,
+        "index": 62
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0063",
+      "resourceName": "bucket-0063",
+      "service": "aws",
+      "passed": false,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-63.json",
+      "rawData": {
+        "test": true,
+        "index": 63
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0064",
+      "resourceName": "bucket-0064",
+      "service": "azure",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-64.json",
+      "rawData": {
+        "test": true,
+        "index": 64
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0065",
+      "resourceName": "bucket-0065",
+      "service": "gcp",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-65.json",
+      "rawData": {
+        "test": true,
+        "index": 65
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0066",
+      "resourceName": "bucket-0066",
+      "service": "aws",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-66.json",
+      "rawData": {
+        "test": true,
+        "index": 66
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0067",
+      "resourceName": "bucket-0067",
+      "service": "azure",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-67.json",
+      "rawData": {
+        "test": true,
+        "index": 67
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0068",
+      "resourceName": "bucket-0068",
+      "service": "gcp",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-68.json",
+      "rawData": {
+        "test": true,
+        "index": 68
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0069",
+      "resourceName": "bucket-0069",
+      "service": "aws",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-69.json",
+      "rawData": {
+        "test": true,
+        "index": 69
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0070",
+      "resourceName": "bucket-0070",
+      "service": "azure",
+      "passed": false,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-70.json",
+      "rawData": {
+        "test": true,
+        "index": 70
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0071",
+      "resourceName": "bucket-0071",
+      "service": "gcp",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-71.json",
+      "rawData": {
+        "test": true,
+        "index": 71
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0072",
+      "resourceName": "bucket-0072",
+      "service": "aws",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-72.json",
+      "rawData": {
+        "test": true,
+        "index": 72
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0073",
+      "resourceName": "bucket-0073",
+      "service": "azure",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-73.json",
+      "rawData": {
+        "test": true,
+        "index": 73
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0074",
+      "resourceName": "bucket-0074",
+      "service": "gcp",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-74.json",
+      "rawData": {
+        "test": true,
+        "index": 74
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0075",
+      "resourceName": "bucket-0075",
+      "service": "aws",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-75.json",
+      "rawData": {
+        "test": true,
+        "index": 75
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0076",
+      "resourceName": "bucket-0076",
+      "service": "azure",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-76.json",
+      "rawData": {
+        "test": true,
+        "index": 76
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0077",
+      "resourceName": "bucket-0077",
+      "service": "gcp",
+      "passed": false,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-77.json",
+      "rawData": {
+        "test": true,
+        "index": 77
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0078",
+      "resourceName": "bucket-0078",
+      "service": "aws",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-78.json",
+      "rawData": {
+        "test": true,
+        "index": 78
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0079",
+      "resourceName": "bucket-0079",
+      "service": "azure",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-79.json",
+      "rawData": {
+        "test": true,
+        "index": 79
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0080",
+      "resourceName": "bucket-0080",
+      "service": "gcp",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-80.json",
+      "rawData": {
+        "test": true,
+        "index": 80
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0081",
+      "resourceName": "bucket-0081",
+      "service": "aws",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-81.json",
+      "rawData": {
+        "test": true,
+        "index": 81
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0082",
+      "resourceName": "bucket-0082",
+      "service": "azure",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-82.json",
+      "rawData": {
+        "test": true,
+        "index": 82
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0083",
+      "resourceName": "bucket-0083",
+      "service": "gcp",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-83.json",
+      "rawData": {
+        "test": true,
+        "index": 83
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0084",
+      "resourceName": "bucket-0084",
+      "service": "aws",
+      "passed": false,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-84.json",
+      "rawData": {
+        "test": true,
+        "index": 84
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0085",
+      "resourceName": "bucket-0085",
+      "service": "azure",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-85.json",
+      "rawData": {
+        "test": true,
+        "index": 85
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0086",
+      "resourceName": "bucket-0086",
+      "service": "gcp",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-86.json",
+      "rawData": {
+        "test": true,
+        "index": 86
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0087",
+      "resourceName": "bucket-0087",
+      "service": "aws",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-87.json",
+      "rawData": {
+        "test": true,
+        "index": 87
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0088",
+      "resourceName": "bucket-0088",
+      "service": "azure",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-88.json",
+      "rawData": {
+        "test": true,
+        "index": 88
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0089",
+      "resourceName": "bucket-0089",
+      "service": "gcp",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-89.json",
+      "rawData": {
+        "test": true,
+        "index": 89
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0090",
+      "resourceName": "bucket-0090",
+      "service": "aws",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-90.json",
+      "rawData": {
+        "test": true,
+        "index": 90
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0091",
+      "resourceName": "bucket-0091",
+      "service": "azure",
+      "passed": false,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-91.json",
+      "rawData": {
+        "test": true,
+        "index": 91
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0092",
+      "resourceName": "bucket-0092",
+      "service": "gcp",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-92.json",
+      "rawData": {
+        "test": true,
+        "index": 92
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0093",
+      "resourceName": "bucket-0093",
+      "service": "aws",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-93.json",
+      "rawData": {
+        "test": true,
+        "index": 93
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0094",
+      "resourceName": "bucket-0094",
+      "service": "azure",
+      "passed": true,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-94.json",
+      "rawData": {
+        "test": true,
+        "index": 94
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0095",
+      "resourceName": "bucket-0095",
+      "service": "gcp",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-95.json",
+      "rawData": {
+        "test": true,
+        "index": 95
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0096",
+      "resourceName": "bucket-0096",
+      "service": "aws",
+      "passed": true,
+      "severity": "critical",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-96.json",
+      "rawData": {
+        "test": true,
+        "index": 96
+      }
+    },
+    {
+      "controlId": "CC7.1",
+      "resourceId": "arn:aws:s3:::bucket-0097",
+      "resourceName": "bucket-0097",
+      "service": "azure",
+      "passed": true,
+      "severity": "high",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-97.json",
+      "rawData": {
+        "test": true,
+        "index": 97
+      }
+    },
+    {
+      "controlId": "CC8.1",
+      "resourceId": "arn:aws:s3:::bucket-0098",
+      "resourceName": "bucket-0098",
+      "service": "gcp",
+      "passed": false,
+      "severity": "medium",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-98.json",
+      "rawData": {
+        "test": true,
+        "index": 98
+      }
+    },
+    {
+      "controlId": "CC6.6",
+      "resourceId": "arn:aws:s3:::bucket-0099",
+      "resourceName": "bucket-0099",
+      "service": "aws",
+      "passed": true,
+      "severity": "low",
+      "evidencePath": "compliance-evidence/test/RUN-STRESS-100/evidence-99.json",
+      "rawData": {
+        "test": true,
+        "index": 99
+      }
+    }
+  ]
+}

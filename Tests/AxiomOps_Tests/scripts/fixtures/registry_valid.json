@@ -1,0 +1,61 @@
+{
+  "assets": [
+    {
+      "assetId": "asset-001",
+      "resourceId": "arn:aws:s3:::prod-data-lake",
+      "service": "aws",
+      "name": "prod-data-lake",
+      "environment": "production",
+      "criticality": "high",
+      "dataClassification": "pii",
+      "ownerEmail": "data-platform@example.com",
+      "team": "Data Platform",
+      "escalationEmail": "ciso@example.com",
+      "tags": [
+        "soc2",
+        "gdpr"
+      ]
+    },
+    {
+      "assetId": "asset-002",
+      "resourceId": "arn:aws:s3:::dev-data-lake",
+      "service": "aws",
+      "name": "dev-data-lake",
+      "environment": "dev",
+      "criticality": "low",
+      "dataClassification": "internal",
+      "ownerEmail": "dev-team@example.com",
+      "team": "Dev Team",
+      "escalationEmail": "lead@example.com",
+      "tags": [
+        "dev"
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "controlId": "CC6.6",
+      "framework": "SOC2",
+      "description": "Encryption at rest - AES-256 enabled",
+      "defaultOwnerEmail": "security-engineering@example.com",
+      "defaultSlaHours": {
+        "critical": 72,
+        "high": 168,
+        "medium": 720,
+        "low": 2160
+      }
+    },
+    {
+      "controlId": "CC7.2",
+      "framework": "SOC2",
+      "description": "Access logging enabled",
+      "defaultOwnerEmail": "security-engineering@example.com",
+      "defaultSlaHours": {
+        "critical": 24,
+        "high": 72,
+        "medium": 168,
+        "low": 720
+      }
+    }
+  ]
+}
